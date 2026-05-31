@@ -1584,7 +1584,7 @@ fn cmd_migrate(installer: &Installer, rollback: bool, json: bool) -> anyhow::Res
             println!("{}", serde_json::json!({"status": "rollback not needed", "current_version": 2}));
         } else {
             println!("{}", "Current layout is v2. Nothing to roll back.".yellow());
-            println!("Skills are in {}", new_skills.dimmed());
+            println!("Skills are in {}", new_skills.to_string_lossy().dimmed());
         }
         return Ok(());
     }
