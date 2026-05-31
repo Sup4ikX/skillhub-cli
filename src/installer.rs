@@ -1,7 +1,6 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use crate::agent::AgentKind;
 use crate::config::Config;
 use crate::error::{Result, SkillHubError};
 use crate::progress;

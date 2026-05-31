@@ -52,6 +52,47 @@ fn main() -> anyhow::Result<()> {
             }
     Ok(())
 }
+        Commands::Agents => cmd_agents(cli.json),
+        cmd => {
+            let config = Config::load()?;
+            let client = RegistryClient::new(config.clone());
+            let mut installer = Installer::new(config);
+            installer.no_progress = cli.json;
+
+            match cmd {
+                Commands::Setup
+                | Commands::Help
+                | Commands::Agents => unreachable!(),
+                Commands::Search { query, verbose, github } => {
+                    cmd_search(&client, query, *verbose, *github, cli.json)
+                }
+                Commands::Install { name, yes, no_scan, project } => {
+                    cmd_install(&client, &installer, name, *yes, *no_scan, *project, cli.json)
+                }
+                Commands::Uninstall { name, yes } => {
+                    cmd_uninstall(&installer, name, *yes, cli.json)
+                }
+                Commands::List => cmd_list(&installer, cli.json),
+                Commands::Update => cmd_update(&client, cli.json),
+                Commands::Upgrade { dry_run, all } => {
+                    cmd_upgrade(&client, &installer, *dry_run, *all, cli.json)
+                }
+                Commands::Info { name } => cmd_info(&client, name, cli.json),
+                Commands::Doctor { fix } => cmd_doctor(&client, &installer, *fix, cli.json),
+                Commands::Completions { shell } => cmd_completions(shell, cli.json),
+                Commands::Share => cmd_share(&installer, cli.json),
+                Commands::Restore { source } => cmd_restore(&client, &installer, source, cli.json),
+                Commands::Suggest => cmd_suggest(&client, cli.json),
+                Commands::Publish { path, force } => cmd_publish(&client, path.as_deref(), *force, cli.json),
+                Commands::Import { source, dry_run } => cmd_import(&installer, source, *dry_run, cli.json),
+                Commands::Stats => cmd_stats(&client, &installer, cli.json),
+                Commands::Badge { format: badge_fmt } => cmd_badge(&installer, badge_fmt, cli.json),
+                Commands::Sync { action, target } => cmd_sync(&client, &installer, action, target.as_deref(), cli.json),
+                Commands::Migrate { rollback } => cmd_migrate(&installer, *rollback, cli.json),
+            }
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------
 // share / restore
@@ -180,47 +221,6 @@ fn cmd_restore(client: &RegistryClient, installer: &Installer, source: &str, jso
     }
     Ok(())
 }
-        Commands::Agents => cmd_agents(cli.json),
-        cmd => {
-            let config = Config::load()?;
-            let client = RegistryClient::new(config.clone());
-            let mut installer = Installer::new(config);
-            installer.no_progress = cli.json;
-
-            match cmd {
-                Commands::Setup
-                | Commands::Help
-                | Commands::Agents => unreachable!(),
-                Commands::Search { query, verbose, github } => {
-                    cmd_search(&client, query, *verbose, *github, cli.json)
-                }
-                Commands::Install { name, yes, no_scan, project } => {
-                    cmd_install(&client, &installer, name, *yes, *no_scan, *project, cli.json)
-                }
-                Commands::Uninstall { name, yes } => {
-                    cmd_uninstall(&installer, name, *yes, cli.json)
-                }
-                Commands::List => cmd_list(&installer, cli.json),
-                Commands::Update => cmd_update(&client, cli.json),
-                Commands::Upgrade { dry_run, all } => {
-                    cmd_upgrade(&client, &installer, *dry_run, *all, cli.json)
-                }
-                Commands::Info { name } => cmd_info(&client, name, cli.json),
-                Commands::Doctor { fix } => cmd_doctor(&client, &installer, *fix, cli.json),
-                Commands::Completions { shell } => cmd_completions(shell, cli.json),
-                Commands::Share => cmd_share(&installer, cli.json),
-                Commands::Restore { source } => cmd_restore(&client, &installer, source, cli.json),
-                Commands::Suggest => cmd_suggest(&client, cli.json),
-                Commands::Publish { path, force } => cmd_publish(&client, path.as_deref(), *force, cli.json),
-                Commands::Import { source, dry_run } => cmd_import(&installer, source, *dry_run, cli.json),
-                Commands::Stats => cmd_stats(&client, &installer, cli.json),
-                Commands::Badge { format: badge_fmt } => cmd_badge(&installer, badge_fmt, cli.json),
-                Commands::Sync { action, target } => cmd_sync(&client, &installer, action, target.as_deref(), cli.json),
-                Commands::Migrate { rollback } => cmd_migrate(&installer, *rollback, cli.json),
-            }
-        }
-    }
-}
 
 fn json_err(msg: &str) -> String {
     serde_json::json!({"error": msg}).to_string()
@@ -344,7 +344,7 @@ fn cmd_setup(json: bool) -> anyhow::Result<()> {
 // doctor
 // ---------------------------------------------------------------------------
 
-fn cmd_doctor(client: &RegistryClient, installer: &Installer, fix: bool, json: bool) -> anyhow::Result<()> {
+fn cmd_doctor(client: &RegistryClient, _installer: &Installer, fix: bool, json: bool) -> anyhow::Result<()> {
     let config = Config::load()?;
     let mut issues: Vec<String> = Vec::new();
     let mut fixed: Vec<String> = Vec::new();
@@ -744,7 +744,7 @@ fn cmd_install(
 
         // Append a reference to the skill
         let skill_ref = format!("\n## {} (v{})\n\n{}", skill.name, skill.version, content);
-        let mut existing = if pfile.exists() {
+        let existing = if pfile.exists() {
             std::fs::read_to_string(&pfile)?
         } else {
             String::new()
@@ -1584,7 +1584,7 @@ fn cmd_migrate(installer: &Installer, rollback: bool, json: bool) -> anyhow::Res
             println!("{}", serde_json::json!({"status": "rollback not needed", "current_version": 2}));
         } else {
             println!("{}", "Current layout is v2. Nothing to roll back.".yellow());
-            println!("{}", "Skills are in {:?}", new_skills.dimmed());
+            println!("Skills are in {}", new_skills.dimmed());
         }
         return Ok(());
     }
