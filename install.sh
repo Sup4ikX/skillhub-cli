@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-REPO="skillhub/skillhub"
+REPO="Sup4ikX/skillhub-cli"
 VERSION="${1:-latest}"
 INSTALL_DIR="${2:-$HOME/.skillhub/bin}"
 

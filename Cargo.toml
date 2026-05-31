@@ -2,10 +2,10 @@
 name = "skillhub"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.82"
+rust-version = "1.85"
 description = "Universal skill registry for AI agents"
 license = "MIT"
-repository = "https://github.com/skillhub/skillhub"
+repository = "https://github.com/Sup4ikX/skillhub-cli"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
@@ -36,9 +36,9 @@ section = "utils"
 priority = "optional"
 depends = "$auto"
 
-[package.metadata.rpm]
-package = "skillhub"
-maintainer = "SkillHub Team <team@skillhub.dev>"
+[package.metadata.generate-rpm]
+package-name = "skillhub"
+author = "SkillHub Team <team@skillhub.dev>"
 description = "Universal skill registry for AI coding agents"
 license = "MIT"
 

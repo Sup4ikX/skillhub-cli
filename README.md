@@ -38,7 +38,7 @@ scoop install skillhub
 
 ### From source (requires Rust)
 ```bash
-cargo install --git https://github.com/skillhub/skillhub
+cargo install --git https://github.com/Sup4ikX/skillhub-cli
 # or locally:
 cargo build --release && ./target/release/skillhub
 ```
@@ -306,7 +306,7 @@ scoop install skillhub
 
 ### Из исходников (требуется Rust)
 ```bash
-cargo install --git https://github.com/skillhub/skillhub
+cargo install --git https://github.com/Sup4ikX/skillhub-cli
 cargo build --release && ./target/release/skillhub
 ```
 

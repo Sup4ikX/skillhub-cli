@@ -5,7 +5,7 @@ param(
 
 Write-Host "Installing skillhub..." -ForegroundColor Green
 
-$Repo = "skillhub/skillhub"
+$Repo = "Sup4ikX/skillhub-cli"
 
 # Detect architecture
 $Arch = if ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { "i686" }
