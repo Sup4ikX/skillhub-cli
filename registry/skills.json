@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "skills": [
+    {
+      "name": "@anthropic/research-assistant",
+      "description": "Deep research skill for Claude Code — multi-source analysis with citation tracking",
+      "author": "anthropic",
+      "version": "1.2.0",
+      "tags": ["research", "analysis", "citations", "academic"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@anthropic/research-assistant/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "opencode"]
+      },
+      "quality": {
+        "score": 92,
+        "security": 95,
+        "clarity": 88
+      }
+    },
+    {
+      "name": "@anthropic/code-review",
+      "description": "Thorough code review skill — finds bugs, security issues, and style problems",
+      "author": "anthropic",
+      "version": "2.0.1",
+      "tags": ["code-review", "security", "quality"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@anthropic/code-review/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "codex", "opencode"]
+      },
+      "quality": {
+        "score": 88,
+        "security": 90,
+        "clarity": 85
+      }
+    },
+    {
+      "name": "@anthropic/doc-writer",
+      "description": "Auto-generate documentation for code — README, API docs, inline comments",
+      "author": "anthropic",
+      "version": "1.0.3",
+      "tags": ["documentation", "readme", "api-docs"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@anthropic/doc-writer/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "codex", "gemini-cli", "opencode"]
+      },
+      "quality": {
+        "score": 85,
+        "security": 92,
+        "clarity": 80
+      }
+    },
+    {
+      "name": "@mattpocock/testing",
+      "description": "Write comprehensive tests — unit, integration, and edge cases for any codebase",
+      "author": "mattpocock",
+      "version": "1.5.0",
+      "tags": ["testing", "unit-tests", "integration", "edge-cases"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@mattpocock/testing/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "codex", "opencode"]
+      },
+      "quality": {
+        "score": 91,
+        "security": 94,
+        "clarity": 87
+      }
+    },
+    {
+      "name": "@mattpocock/refactor",
+      "description": "Safe refactoring skill — identifies code smells and suggests improvements with backward compatibility",
+      "author": "mattpocock",
+      "version": "1.1.0",
+      "tags": ["refactoring", "code-quality", "clean-code"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@mattpocock/refactor/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "codex", "opencode"]
+      },
+      "quality": {
+        "score": 87,
+        "security": 88,
+        "clarity": 85
+      }
+    },
+    {
+      "name": "@karpathy/debug",
+      "description": "Systematic debugging skill — follows Karpathy's debugging principles for LLM output issues",
+      "author": "karpathy",
+      "version": "0.9.0",
+      "tags": ["debugging", "troubleshooting", "llm"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@karpathy/debug/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "opencode"]
+      },
+      "quality": {
+        "score": 82,
+        "security": 90,
+        "clarity": 78
+      }
+    },
+    {
+      "name": "@composio/saas-automation",
+      "description": "Connect AI agents to 78+ SaaS apps — Slack, Notion, GitHub, Linear, Salesforce",
+      "author": "composio",
+      "version": "3.2.1",
+      "tags": ["automation", "saas", "integrations", "workflows"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@composio/saas-automation/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "codex", "opencode"]
+      },
+      "quality": {
+        "score": 89,
+        "security": 85,
+        "clarity": 88
+      }
+    },
+    {
+      "name": "@skilltest/security-audit",
+      "description": "Scan any skill for security issues — prompt injection, data exfil, hidden instructions",
+      "author": "skilltest",
+      "version": "1.0.0",
+      "tags": ["security", "audit", "prompt-injection", "safety"],
+      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@skilltest/security-audit/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["claude-code", "codex", "gemini-cli", "opencode"]
+      },
+      "quality": {
+        "score": 94,
+        "security": 98,
+        "clarity": 90
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+Id: SkillHub.SkillHub
+Publisher: SkillHub
+Name: SkillHub
+Version: $VERSION
+License: MIT
+InstallerType: portable
+Commands: skillhub
+Installers:
+  - Arch: x64
+    Url: https://github.com/skillhub/cli/releases/download/v$VERSION/skillhub-x86_64-pc-windows-msvc.tar.gz
+    Sha256: $SHA256_X64
+  - Arch: arm64
+    Url: https://github.com/skillhub/cli/releases/download/v$VERSION/skillhub-aarch64-pc-windows-msvc.tar.gz
+    Sha256: $SHA256_ARM64
+ManifestVersion: 1.6.0

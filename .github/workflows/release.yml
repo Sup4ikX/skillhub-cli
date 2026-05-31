@@ -1,0 +1,198 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ""
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            suffix: ""
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ""
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            suffix: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: ".exe"
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            suffix: ".exe"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          mkdir -p ../../../dist
+          tar czf ../../../dist/skillhub-${{ matrix.target }}.tar.gz skillhub${{ matrix.suffix }}
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cd ../../../dist
+            certutil -hashfile skillhub-${{ matrix.target }}.tar.gz SHA256 > skillhub-${{ matrix.target }}.tar.gz.sha256
+          else
+            shasum -a 256 skillhub-${{ matrix.target }}.tar.gz > skillhub-${{ matrix.target }}.tar.gz.sha256
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-${{ matrix.target }}
+          path: dist/*
+
+  deb:
+    name: .deb package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build .deb
+        run: cargo deb --target x86_64-unknown-linux-gnu
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-deb
+          path: target/x86_64-unknown-linux-gnu/debian/*.deb
+
+      - name: Build .deb (aarch64)
+        run: |
+          rustup target add aarch64-unknown-linux-gnu
+          cargo deb --target aarch64-unknown-linux-gnu
+
+      - name: Upload .deb (aarch64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-deb-arm64
+          path: target/aarch64-unknown-linux-gnu/debian/*.deb
+
+  rpm:
+    name: .rpm package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-generate-rpm
+        run: cargo install cargo-generate-rpm
+
+      - name: Build .rpm
+        run: cargo generate-rpm
+
+      - name: Upload .rpm
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-rpm
+          path: target/generate-rpm/*.rpm
+
+  apk:
+    name: .apk package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Alpine package
+        uses: docker://alpine:edge
+        with:
+          entrypoint: /bin/sh
+          args: >
+            -c "
+            apk add rust cargo build-base;
+            rustup target add x86_64-alpine-linux-musl;
+            cargo build --release;
+            mkdir -p pkg/usr/bin;
+            cp target/release/skillhub pkg/usr/bin/;
+            mkdir -p pkg/usr/share/doc/skillhub;
+            cp README.md pkg/usr/share/doc/skillhub/;
+            cd pkg;
+            tar czf ../skillhub-x86_64-alpine-linux-musl.apk *;
+            "
+
+      - name: Upload .apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-apk
+          path: skillhub-*.apk
+
+  release:
+    needs: [build, deb, rpm, apk]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Flatten artifact tree
+        run: |
+          mkdir release
+          find dist -type f -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Generate winget manifest
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cat > release/skillhub.winget.yaml << EOF
+          Id: SkillHub.SkillHub
+          Publisher: SkillHub
+          Name: SkillHub
+          Version: $VERSION
+          License: MIT
+          InstallerType: portable
+          Commands: skillhub
+          Installers:
+            - Arch: x64
+              Url: https://github.com/skillhub/cli/releases/download/v$VERSION/skillhub-x86_64-pc-windows-msvc.tar.gz
+              Sha256: placeholder
+            - Arch: arm64
+              Url: https://github.com/skillhub/cli/releases/download/v$VERSION/skillhub-aarch64-pc-windows-msvc.tar.gz
+              Sha256: placeholder
+          EOF
+          echo "Winget manifest created"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true

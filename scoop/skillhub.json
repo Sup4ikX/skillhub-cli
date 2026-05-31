@@ -1,0 +1,23 @@
+{
+    "version": "0.1.0",
+    "description": "Universal skill registry for AI agents",
+    "homepage": "https://github.com/skillhub/skillhub",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/skillhub/skillhub/releases/download/v0.1.0/skillhub-x86_64-pc-windows-msvc.tar.gz",
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+    },
+    "bin": "skillhub.exe",
+    "checkver": {
+        "github": "https://github.com/skillhub/skillhub"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/skillhub/skillhub/releases/download/v$version/skillhub-x86_64-pc-windows-msvc.tar.gz"
+            }
+        }
+    }
+}

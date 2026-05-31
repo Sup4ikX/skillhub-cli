@@ -1,0 +1,15 @@
+Id: SkillHub.SkillHub
+Publisher: SkillHub
+Name: SkillHub
+PackageName: SkillHub
+License: MIT
+ShortDescription: Universal skill registry for AI coding agents
+Description: SkillHub is a universal skill registry for AI coding agents. Install, search, and manage skills across 30+ AI agents.
+Tags:
+  - skillhub
+  - AI
+  - skills
+  - claude
+  - cursor
+  - opencode
+ManifestVersion: 1.6.0
