@@ -57,6 +57,14 @@ jobs:
           AR_aarch64_unknown_linux_gnu: aarch64-linux-gnu-ar
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
+      - name: Debug binary location
+        shell: bash
+        run: |
+          echo "--- Target: ${{ matrix.target }} ---"
+          echo "PWD: $(pwd)"
+          ls -la target/${{ matrix.target }}/release/ 2>&1 || echo "Directory not found"
+          ls -la target/release/ 2>&1 || echo "Default release dir not found"
+
       - name: Package
         shell: bash
         run: |
