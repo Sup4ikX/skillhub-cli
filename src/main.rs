@@ -345,8 +345,6 @@ fn cmd_setup(json: bool) -> anyhow::Result<()> {
 // ---------------------------------------------------------------------------
 
 fn cmd_doctor(client: &RegistryClient, installer: &Installer, fix: bool, json: bool) -> anyhow::Result<()> {
-    use std::path::Path;
-
     let config = Config::load()?;
     let mut issues: Vec<String> = Vec::new();
     let mut fixed: Vec<String> = Vec::new();
@@ -489,7 +487,6 @@ fn humantime(secs: u64) -> String {
 // ---------------------------------------------------------------------------
 
 fn cmd_agents(json: bool) -> anyhow::Result<()> {
-    let detected = agent::AgentConfig::detect();
     let config = Config::load()?;
 
     if json {
@@ -762,7 +759,7 @@ fn cmd_install(
     } else {
         let paths = installer.install(&skill)?;
         for p in &paths {
-            println!("  {}", p.display().dimmed());
+            println!("  {}", p.display().to_string().dimmed());
         }
     }
 
@@ -851,7 +848,7 @@ fn cmd_list(installer: &Installer, json: bool) -> anyhow::Result<()> {
         if !skill.description.is_empty() {
             println!("    {}", skill.description.dimmed());
         }
-        println!("    {:?}", path.dimmed());
+        println!("    {}", path.display().to_string().dimmed());
         println!();
     }
 
@@ -1072,7 +1069,7 @@ fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: b
     // Create a GitHub issue in the registry repo
     // URL like raw.githubusercontent.com/skillhub/registry/main/skills.json
     // repo = skillhub/registry (path segments [0]/[1])
-    let registry_url_parsed = url::Url::parse(&client.config.registry_url)
+    let registry_url_parsed = url::Url::parse(client.registry_url())
         .map_err(|e| anyhow::anyhow!("invalid registry URL: {}", e))?;
     let segments: Vec<String> = registry_url_parsed.path_segments()
         .map(|s| s.filter(|p| !p.is_empty()).map(String::from).collect())
@@ -1080,7 +1077,7 @@ fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: b
     let repo = if segments.len() >= 2 {
         format!("{}/{}", segments[0], segments[1])
     } else {
-        anyhow::bail!("cannot determine registry repo from URL: {}", client.config.registry_url);
+        anyhow::bail!("cannot determine registry repo from URL: {}", client.registry_url());
     };
 
     let title = format!("skill submission: {}", skill_name);
@@ -1101,7 +1098,7 @@ fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: b
         .set("User-Agent", "skillhub/0.1.0")
         .set("Content-Type", "application/json");
 
-    if let Some(t) = client.config.github_token() {
+    if let Some(t) = client.github_token() {
         req = req.set("Authorization", &format!("Bearer {}", t));
     } else {
         anyhow::bail!("GitHub token required to publish. Run 'skillhub setup' first.");
@@ -1241,6 +1238,7 @@ fn cmd_suggest(client: &RegistryClient, json: bool) -> anyhow::Result<()> {
 // ---------------------------------------------------------------------------
 
 fn cmd_completions(shell: &str, json: bool) -> anyhow::Result<()> {
+    use clap::CommandFactory;
     use clap_complete::{generate, shells::*};
     use std::io;
 
@@ -1575,7 +1573,7 @@ fn cmd_sync(client: &RegistryClient, installer: &Installer, action: &str, target
 fn cmd_migrate(installer: &Installer, rollback: bool, json: bool) -> anyhow::Result<()> {
     let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
     let old_skills = home.join(".skillhub").join("skills");
-    let old_config = home.join(".skillhub").join("config.toml");
+    let _old_config = home.join(".skillhub").join("config.toml");
 
     let new_skills = installer.config.skills_dir.clone();
     let new_cache = installer.config.cache_dir.clone();

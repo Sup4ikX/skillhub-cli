@@ -135,6 +135,16 @@ impl RegistryClient {
         RegistryClient { config }
     }
 
+    /// Get the registry source URL.
+    pub fn registry_url(&self) -> &str {
+        &self.config.registry_url
+    }
+
+    /// Get a reference to the GitHub token, if set.
+    pub fn github_token(&self) -> Option<&str> {
+        self.config.github_token()
+    }
+
     /// Search GitHub repositories opted into `skillhub-skill` topic.
     /// Results are cached for 1 hour in the cache directory.
     /// Combine with an optional `query` for full-text filtering.
@@ -275,7 +285,7 @@ impl RegistryClient {
             .ok_or_else(|| SkillHubError::SkillNotFound(reference.display()))
     }
 
-    fn gh_get(&self, url: &str) -> Result<String> {
+    pub fn gh_get(&self, url: &str) -> Result<String> {
         let mut req = ureq::get(url).set("User-Agent", "skillhub/0.1.0");
 
         if let Some(token) = self.config.github_token() {

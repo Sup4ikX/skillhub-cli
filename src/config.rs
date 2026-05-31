@@ -72,6 +72,7 @@ impl Default for Config {
             cache_dir: base.join("cache"),
             github_token: None,
             deploy_agents: Vec::new(),
+            last_suggest_date: None,
         }
     }
 }
