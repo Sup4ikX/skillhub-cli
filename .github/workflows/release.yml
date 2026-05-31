@@ -112,6 +112,9 @@ jobs:
       - name: Install cargo-generate-rpm
         run: cargo install cargo-generate-rpm
 
+      - name: Build binary
+        run: cargo build --release
+
       - name: Build .rpm
         run: cargo generate-rpm
 
