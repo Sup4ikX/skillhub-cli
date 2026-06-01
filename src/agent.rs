@@ -314,6 +314,7 @@ impl AgentConfig {
         !self.agents.is_empty()
     }
 
+    #[allow(dead_code)]
     pub fn summary(&self) -> String {
         if self.agents.is_empty() {
             return "none detected".to_string();

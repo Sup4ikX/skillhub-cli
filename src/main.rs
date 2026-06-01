@@ -168,10 +168,9 @@ fn cmd_restore(
 ) -> anyhow::Result<()> {
     // Fetch manifest (from URL or local file)
     let raw = if source.starts_with("http://") || source.starts_with("https://") {
-        let body = client.gh_get(source)?;
-        body
+        client.gh_get(source)?
     } else {
-        std::fs::read_to_string(source).map_err(|e| SkillHubError::Io(e))?
+        std::fs::read_to_string(source).map_err(SkillHubError::Io)?
     };
 
     // Parse manifest
@@ -185,6 +184,7 @@ fn cmd_restore(
     #[derive(serde::Deserialize)]
     struct ManifestSkill {
         name: String,
+        #[allow(dead_code)]
         #[serde(default)]
         version: String,
     }
@@ -1791,7 +1791,7 @@ fn cmd_sync(
         "import" => {
             let raw = match target {
                 Some(src) if src.starts_with("http") => client.gh_get(src)?,
-                Some(src) => std::fs::read_to_string(src).map_err(|e| SkillHubError::Io(e))?,
+                Some(src) => std::fs::read_to_string(src).map_err(SkillHubError::Io)?,
                 None => {
                     if json {
                         println!("{}", json_err("import requires a file path or URL"));
@@ -1813,6 +1813,7 @@ fn cmd_sync(
             #[derive(serde::Deserialize)]
             struct SyncSkill {
                 name: String,
+                #[allow(dead_code)]
                 #[serde(default)]
                 version: String,
             }

@@ -47,8 +47,7 @@ pub enum SkillRef {
 
 impl SkillRef {
     pub fn parse(input: &str) -> Result<Self> {
-        if input.starts_with('@') {
-            let without_at = &input[1..];
+        if let Some(without_at) = input.strip_prefix('@') {
             if let Some((owner, name)) = without_at.split_once('/') {
                 if owner.is_empty() || name.is_empty() {
                     return Err(SkillHubError::InvalidSkillName(input.to_string()));
@@ -98,6 +97,7 @@ impl SkillRef {
 struct GitHubRepoItem {
     full_name: String,
     description: Option<String>,
+    #[allow(dead_code)]
     #[serde(default)]
     stargazers_count: usize,
     #[serde(default)]
@@ -108,6 +108,7 @@ struct GitHubRepoItem {
 #[derive(Debug, Deserialize)]
 struct GitHubSearchRepos {
     items: Vec<GitHubRepoItem>,
+    #[allow(dead_code)]
     total_count: usize,
 }
 
@@ -254,6 +255,7 @@ impl RegistryClient {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn update(&self) -> Result<Registry> {
         let registry = self.fetch()?;
         self.save_cache(&registry)?;

@@ -44,7 +44,7 @@ impl Installer {
             }
             let target = target.unwrap();
 
-            let agent_skill_dir = target.join(&skill.name.replace('@', "").replace('/', "_"));
+            let agent_skill_dir = target.join(skill.name.replace('@', "").replace('/', "_"));
             if agent_skill_dir.exists() {
                 continue;
             }
@@ -138,6 +138,7 @@ impl Installer {
         Ok(out)
     }
 
+    #[allow(dead_code)]
     pub fn skill_path(&self, reference: &SkillRef) -> Result<PathBuf> {
         for (dir, skill) in self.list_installed()? {
             if reference.matches(&skill) {
@@ -168,6 +169,7 @@ impl Installer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::registry::Compatibility;
     use tempfile::TempDir;
 
     fn test_skill(name: &str) -> Skill {
