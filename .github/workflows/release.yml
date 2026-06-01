@@ -12,7 +12,23 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build
+
+      - name: Test
+        run: cargo test
+
   build:
+    needs: [test]
     name: ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -139,25 +155,33 @@ jobs:
   apk:
     name: .apk package
     runs-on: ubuntu-latest
+    container: alpine:edge
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Alpine package
-        uses: docker://alpine:edge
-        with:
-          entrypoint: /bin/sh
-          args: >
-            -c "
-            apk add rust cargo build-base;
-            rustup target add x86_64-alpine-linux-musl;
-            cargo build --release;
-            mkdir -p pkg/usr/bin;
-            cp target/release/skillhub pkg/usr/bin/;
-            mkdir -p pkg/usr/share/doc/skillhub;
-            cp README.md pkg/usr/share/doc/skillhub/;
-            cd pkg;
-            tar czf ../skillhub-x86_64-alpine-linux-musl.apk *;
-            "
+      - name: Install system deps and Rust via rustup
+        shell: sh
+        run: |
+          apk add git curl build-base
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Build for x86_64-alpine-linux-musl
+        shell: sh
+        run: |
+          . "$HOME/.cargo/env"
+          rustup target add x86_64-alpine-linux-musl
+          cargo build --release --target x86_64-alpine-linux-musl
+
+      - name: Package APK
+        shell: sh
+        run: |
+          mkdir -p pkg/usr/bin
+          cp target/x86_64-alpine-linux-musl/release/skillhub pkg/usr/bin/
+          mkdir -p pkg/usr/share/doc/skillhub
+          cp README.md pkg/usr/share/doc/skillhub/
+          cd pkg
+          tar czf ../skillhub-x86_64-alpine-linux-musl.apk *
 
       - name: Upload .apk
         uses: actions/upload-artifact@v4

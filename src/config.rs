@@ -109,6 +109,7 @@ mod tests {
             cache_dir: base.join("cache"),
             github_token: Some("ghp_x".to_string()),
             deploy_agents: vec![AgentKind::ClaudeCode],
+            last_suggest_date: None,
         };
 
         let p = base.join("config.toml");

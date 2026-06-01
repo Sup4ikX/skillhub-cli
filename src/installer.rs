@@ -189,6 +189,7 @@ mod tests {
             cache_dir: tmp.path().join("cache"),
             github_token: None,
             deploy_agents: vec![],
+            last_suggest_date: None,
         };
         let inst = Installer::new(cfg);
         assert!(inst.list_installed().unwrap().is_empty());
@@ -208,6 +209,7 @@ mod tests {
             cache_dir: tmp.path().join("cache"),
             github_token: None,
             deploy_agents: vec![],
+            last_suggest_date: None,
         };
         let inst = Installer::new(cfg);
         let list = inst.list_installed().unwrap();
@@ -224,6 +226,7 @@ mod tests {
             cache_dir: tmp.path().join("cache"),
             github_token: None,
             deploy_agents: vec![],
+            last_suggest_date: None,
         };
         let inst = Installer::new(cfg);
         assert!(inst.skill_dir("no-slash").is_err());

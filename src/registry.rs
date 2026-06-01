@@ -351,6 +351,9 @@ mod tests {
             cache_dir: dir.to_path_buf(),
             skills_dir: dir.join("skills"),
             registry_url: String::new(),
+            github_token: None,
+            deploy_agents: vec![],
+            last_suggest_date: None,
         }
     }
 
@@ -487,6 +490,9 @@ mod tests {
             cache_dir: tmp.path().join("empty"),
             skills_dir: tmp.path().join("skills"),
             registry_url: String::new(),
+            github_token: None,
+            deploy_agents: vec![],
+            last_suggest_date: None,
         };
 
         let client = RegistryClient::new(config);
