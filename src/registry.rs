@@ -146,9 +146,8 @@ impl RegistryClient {
         self.config.github_token()
     }
 
-    /// Search GitHub repositories opted into `skillhub-skill` topic.
+    /// Search all GitHub repositories matching `query`.
     /// Results are cached for 1 hour in the cache directory.
-    /// Combine with an optional `query` for full-text filtering.
     pub fn search_github(&self, query: &str) -> Result<Vec<Skill>> {
         let cache_key = format!("github_search_{}.json", cache_key(query));
         let cache_path = self.config.cache_dir.join(&cache_key);
@@ -168,11 +167,10 @@ impl RegistryClient {
             }
         }
 
-        let q = if query.is_empty() {
-            "topic:skillhub-skill".to_string()
-        } else {
-            format!("topic:skillhub-skill+{}", query.replace(' ', "+"))
-        };
+        if query.is_empty() {
+            return Ok(Vec::new());
+        }
+        let q = query.replace(' ', "+");
 
         let url = format!(
             "{}/search/repositories?q={}&per_page=30&sort=stars",
@@ -189,11 +187,16 @@ impl RegistryClient {
                 "https://raw.githubusercontent.com/{}/{}/SKILL.md",
                 item.full_name, item.default_branch
             );
+
+            // Skip repos without a SKILL.md file
+            if !self.skill_file_exists(&raw_url) {
+                continue;
+            }
+
             let description = item.description.unwrap_or_default();
             let tags: Vec<String> = item
                 .topics
                 .iter()
-                .filter(|t| *t != "skillhub-skill")
                 .map(|t| t.to_string())
                 .collect();
 
@@ -290,6 +293,19 @@ impl RegistryClient {
             .into_iter()
             .find(|skill| reference.matches(skill))
             .ok_or_else(|| SkillHubError::SkillNotFound(reference.display()))
+    }
+
+    fn skill_file_exists(&self, url: &str) -> bool {
+        let mut req = ureq::get(url).set("User-Agent", "skillhub/0.1.0");
+        if let Some(token) = self.config.github_token() {
+            req = req.set("Authorization", &format!("Bearer {}", token));
+        } else if let Ok(token) = std::env::var("GITHUB_TOKEN") {
+            req = req.set("Authorization", &format!("Bearer {}", token));
+        }
+        match req.call() {
+            Ok(resp) => resp.status() == 200,
+            _ => false,
+        }
     }
 
     pub fn gh_get(&self, url: &str) -> Result<String> {

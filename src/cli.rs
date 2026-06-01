@@ -5,7 +5,8 @@ use clap::{Parser, Subcommand};
     name = "skillhub",
     about = "Universal skill registry for AI agents",
     version,
-    propagate_version = true
+    propagate_version = true,
+    disable_help_subcommand = true
 )]
 pub struct Cli {
     /// Output JSON instead of colored terminal output
@@ -32,7 +33,7 @@ pub enum Commands {
         query: String,
         #[arg(short, long)]
         verbose: bool,
-        /// Also search GitHub repos with skillhub-skill topic
+        /// Also search all GitHub repos
         #[arg(short = 'g', long)]
         github: bool,
     },

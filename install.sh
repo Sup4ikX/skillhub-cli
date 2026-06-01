@@ -36,7 +36,7 @@ if [ "$VERSION" = "latest" ]; then
     grep '"tag_name"' | sed 's/.*"tag_name": "\(.*\)".*/\1/')
   if [ -z "$VERSION" ]; then
     echo "Failed to fetch latest version. Try specifying a version manually."
-    echo "Usage: curl -fsSL https://skillhub.sh/install.sh | bash -s v0.1.0"
+    echo "Usage: chmod +x install.sh && ./install.sh v0.1.0"
     exit 1
   fi
 fi

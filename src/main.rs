@@ -602,19 +602,13 @@ fn cmd_search(
     github: bool,
     json: bool,
 ) -> anyhow::Result<()> {
-    let mut results = match client.search(query) {
-        Ok(r) => r,
-        Err(SkillHubError::RegistryNotFound) => {
-            if json {
-                println!("{}", json_err("no registry cache"));
-            } else {
-                println!(
-                    "{}",
-                    "No registry cache. Run 'skillhub update' first.".yellow()
-                );
-            }
-            return Ok(());
+    let mut results = Vec::new();
+    let registry_found = match client.search(query) {
+        Ok(r) => {
+            results = r;
+            true
         }
+        Err(SkillHubError::RegistryNotFound) => false,
         Err(e) => return Err(e.into()),
     };
 
@@ -635,6 +629,18 @@ fn cmd_search(
                 }
             }
         }
+    }
+
+    if !registry_found && !github {
+        if json {
+            println!("{}", json_err("no registry cache"));
+        } else {
+            println!(
+                "{}",
+                "No registry cache. Run 'skillhub update' first.".yellow()
+            );
+        }
+        return Ok(());
     }
 
     if results.is_empty() {

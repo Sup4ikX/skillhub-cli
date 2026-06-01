@@ -12,28 +12,22 @@
 
 ### Windows (PowerShell)
 ```powershell
-powershell -c "irm https://skillhub.sh/install.ps1 | iex"
-# or locally:
 .\install.ps1
 ```
 
 ### macOS / Linux
 ```bash
-curl -fsSL https://skillhub.sh/install.sh | bash
-# or locally:
 chmod +x install.sh && ./install.sh
 ```
 
 ### Homebrew
 ```bash
-brew tap skillhub/tap
-brew install skillhub
+brew install ./homebrew/skillhub.rb
 ```
 
 ### Scoop (Windows)
 ```powershell
-scoop bucket add skillhub https://github.com/skillhub/scoop
-scoop install skillhub
+scoop install ./scoop/skillhub.json
 ```
 
 ### From source (requires Rust)
@@ -52,7 +46,7 @@ skillhub
 # Search community registry
 skillhub search "code review"
 
-# Also search GitHub repos (opts into skillhub-skill topic)
+# Also search all GitHub repos
 skillhub search "testing" --github
 
 # Install a skill
@@ -123,7 +117,7 @@ To reconfigure later: `skillhub setup`
 | `skillhub agents` | Detect AI agents on this machine |
 | `skillhub setup` | Configure GitHub token and registry URL |
 | `skillhub search <query>` | Search skills in community registry |
-| `skillhub search <query> --github` | Search registry + GitHub (topic: skillhub-skill) |
+| `skillhub search <query> --github` | Search registry + all GitHub repos |
 | `skillhub install <name>` | Install a skill (runs security scan) |
 | `skillhub install <name> --no-scan` | Skip security scan |
 | `skillhub uninstall <name>` | Remove installed skill |
@@ -216,11 +210,11 @@ Run `skillhub agents` to see which are detected on your machine.
 skillhub search "testing"
 ├── 1. Community registry (JSON cache) ─── fast, offline
 └── 2. skillhub search "testing" --github
-    └── GitHub Search API ─── repos with topic skillhub-skill
+    └── GitHub Search API ─── all repos matching query
 ```
 
 - **Community registry**: curated JSON on GitHub (fast, always works)
-- **GitHub search**: finds repos with `skillhub-skill` topic (opt-in, discoverable)
+- **GitHub search**: finds any repo matching the query
 - **Caching**: both results cached locally (registry: forever; GitHub: 1h)
 
 ## Security
@@ -248,7 +242,7 @@ Skip with `--no-scan`.
 ```
 
 - **Registry** = JSON file hosted in a GitHub repo (like Homebrew taps)
-- **GitHub Search** = repos with `skillhub-skill` topic
+- **GitHub Search** = repos matching query
 - **Skills** = markdown files stored in `~/.skillhub/skills/`
 - **Cache** = registry + GitHub search cached locally
 - **Everything else** = Rust CLI, single binary, no runtime deps
@@ -284,24 +278,22 @@ MIT
 
 ### Windows (PowerShell)
 ```powershell
-powershell -c "irm https://skillhub.sh/install.ps1 | iex"
+.\install.ps1
 ```
 
 ### macOS / Linux
 ```bash
-curl -fsSL https://skillhub.sh/install.sh | bash
+chmod +x install.sh && ./install.sh
 ```
 
 ### Homebrew
 ```bash
-brew tap skillhub/tap
-brew install skillhub
+brew install ./homebrew/skillhub.rb
 ```
 
 ### Scoop (Windows)
 ```powershell
-scoop bucket add skillhub https://github.com/skillhub/scoop
-scoop install skillhub
+scoop install ./scoop/skillhub.json
 ```
 
 ### Из исходников (требуется Rust)
@@ -319,7 +311,7 @@ skillhub
 # Поиск в community реестре
 skillhub search "code review"
 
-# Поиск по GitHub (репозитории с топиком skillhub-skill)
+# Поиск по всем репозиториям GitHub
 skillhub search "testing" --github
 
 # Установка навыка (автоматический security scan)
@@ -395,7 +387,7 @@ skillhub list --json
 ## Архитектура поиска (гибрид)
 
 - **Community реестр** — курируемый JSON на GitHub (быстро, всегда работает)
-- **GitHub Search** — репозитории с топиком `skillhub-skill` (opt-in, обнаруживаемые)
+- **GitHub Search** — все репозитории, соответствующие запросу
 - **Кэширование** — оба результата кэшируются локально
 
 ## Безопасность
