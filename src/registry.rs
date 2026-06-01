@@ -173,7 +173,10 @@ impl RegistryClient {
             format!("topic:skillhub-skill+{}", query.replace(' ', "+"))
         };
 
-        let url = format!("{}/search/repositories?q={}&per_page=30&sort=stars", GITHUB_API, q);
+        let url = format!(
+            "{}/search/repositories?q={}&per_page=30&sort=stars",
+            GITHUB_API, q
+        );
         let body = self.gh_get(&url)?;
 
         let resp: GitHubSearchRepos = serde_json::from_str(&body)
@@ -186,7 +189,9 @@ impl RegistryClient {
                 item.full_name, item.default_branch
             );
             let description = item.description.unwrap_or_default();
-            let tags: Vec<String> = item.topics.iter()
+            let tags: Vec<String> = item
+                .topics
+                .iter()
                 .filter(|t| *t != "skillhub-skill")
                 .map(|t| t.to_string())
                 .collect();
@@ -305,7 +310,8 @@ impl RegistryClient {
             other => SkillHubError::GitHubApi(format!("request failed: {}", other)),
         })?;
 
-        response.into_string()
+        response
+            .into_string()
             .map_err(|e| SkillHubError::GitHubApi(format!("read failed: {}", e)))
     }
 
@@ -317,6 +323,7 @@ impl RegistryClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
     use tempfile::TempDir;
 
     fn sample_skill(name: &str) -> Skill {

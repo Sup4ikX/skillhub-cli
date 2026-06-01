@@ -208,9 +208,7 @@ impl AgentKind {
     }
 
     pub fn detect(&self) -> bool {
-        self.detect_home()
-            .map(|p| p.exists())
-            .unwrap_or(false)
+        self.detect_home().map(|p| p.exists()).unwrap_or(false)
     }
 
     /// Where this agent looks for global (user-wide) skills or instructions.
@@ -342,11 +340,7 @@ mod tests {
     #[test]
     fn all_agents_have_skills_dir() {
         for a in AgentKind::all() {
-            assert!(
-                a.skills_dir().is_some(),
-                "{} has no skills_dir",
-                a.label()
-            );
+            assert!(a.skills_dir().is_some(), "{} has no skills_dir", a.label());
         }
     }
 

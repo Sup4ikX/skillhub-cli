@@ -75,9 +75,7 @@ pub enum Commands {
     },
 
     /// Show details about a skill
-    Info {
-        name: String,
-    },
+    Info { name: String },
 
     /// Detect AI agents on this machine
     Agents,

@@ -16,7 +16,7 @@ use cli::{Cli, Commands};
 use config::Config;
 use error::SkillHubError;
 use installer::Installer;
-use registry::{RegistryClient, SkillRef, GITHUB_API};
+use registry::{GITHUB_API, RegistryClient, SkillRef};
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
@@ -33,7 +33,10 @@ fn main() -> anyhow::Result<()> {
                 return cmd_setup(cli.json);
             }
             if cli.json {
-                println!("{}", serde_json::json!({"help": "skillhub — universal skill registry", "commands": ["search", "install", "list", "update", "setup", "agents", "help"]}));
+                println!(
+                    "{}",
+                    serde_json::json!({"help": "skillhub — universal skill registry", "commands": ["search", "install", "list", "update", "setup", "agents", "help"]})
+                );
                 return Ok(());
             }
             println!("{}", "skillhub — universal skill registry".cyan().bold());
@@ -44,14 +47,12 @@ fn main() -> anyhow::Result<()> {
             println!("       skillhub update");
             println!("       skillhub setup");
             println!("       skillhub agents");
-            let n = Installer::new(Config::load()?)
-                .list_installed()?
-                .len();
+            let n = Installer::new(Config::load()?).list_installed()?.len();
             if n > 0 {
                 println!("\nInstalled skills: {}", n);
             }
-    Ok(())
-}
+            Ok(())
+        }
         Commands::Agents => cmd_agents(cli.json),
         cmd => {
             let config = Config::load()?;
@@ -60,15 +61,20 @@ fn main() -> anyhow::Result<()> {
             installer.no_progress = cli.json;
 
             match cmd {
-                Commands::Setup
-                | Commands::Help
-                | Commands::Agents => unreachable!(),
-                Commands::Search { query, verbose, github } => {
-                    cmd_search(&client, query, *verbose, *github, cli.json)
-                }
-                Commands::Install { name, yes, no_scan, project } => {
-                    cmd_install(&client, &installer, name, *yes, *no_scan, *project, cli.json)
-                }
+                Commands::Setup | Commands::Help | Commands::Agents => unreachable!(),
+                Commands::Search {
+                    query,
+                    verbose,
+                    github,
+                } => cmd_search(&client, query, *verbose, *github, cli.json),
+                Commands::Install {
+                    name,
+                    yes,
+                    no_scan,
+                    project,
+                } => cmd_install(
+                    &client, &installer, name, *yes, *no_scan, *project, cli.json,
+                ),
                 Commands::Uninstall { name, yes } => {
                     cmd_uninstall(&installer, name, *yes, cli.json)
                 }
@@ -83,11 +89,17 @@ fn main() -> anyhow::Result<()> {
                 Commands::Share => cmd_share(&installer, cli.json),
                 Commands::Restore { source } => cmd_restore(&client, &installer, source, cli.json),
                 Commands::Suggest => cmd_suggest(&client, cli.json),
-                Commands::Publish { path, force } => cmd_publish(&client, path.as_deref(), *force, cli.json),
-                Commands::Import { source, dry_run } => cmd_import(&installer, source, *dry_run, cli.json),
+                Commands::Publish { path, force } => {
+                    cmd_publish(&client, path.as_deref(), *force, cli.json)
+                }
+                Commands::Import { source, dry_run } => {
+                    cmd_import(&installer, source, *dry_run, cli.json)
+                }
                 Commands::Stats => cmd_stats(&client, &installer, cli.json),
                 Commands::Badge { format: badge_fmt } => cmd_badge(&installer, badge_fmt, cli.json),
-                Commands::Sync { action, target } => cmd_sync(&client, &installer, action, target.as_deref(), cli.json),
+                Commands::Sync { action, target } => {
+                    cmd_sync(&client, &installer, action, target.as_deref(), cli.json)
+                }
                 Commands::Migrate { rollback } => cmd_migrate(&installer, *rollback, cli.json),
             }
         }
@@ -103,20 +115,26 @@ fn cmd_share(installer: &Installer, json: bool) -> anyhow::Result<()> {
 
     if items.is_empty() {
         if json {
-            println!("{}", serde_json::json!({"error": "nothing installed", "skills": []}));
+            println!(
+                "{}",
+                serde_json::json!({"error": "nothing installed", "skills": []})
+            );
         } else {
             println!("{}", "Nothing installed to share.".yellow());
         }
         return Ok(());
     }
 
-    let manifest: Vec<serde_json::Value> = items.iter().map(|(_, s)| {
-        serde_json::json!({
-            "name": s.name,
-            "version": s.version,
-            "author": s.author,
+    let manifest: Vec<serde_json::Value> = items
+        .iter()
+        .map(|(_, s)| {
+            serde_json::json!({
+                "name": s.name,
+                "version": s.version,
+                "author": s.author,
+            })
         })
-    }).collect();
+        .collect();
 
     let manifest_str = serde_json::to_string_pretty(&serde_json::json!({
         "skillhub_version": 1,
@@ -124,26 +142,36 @@ fn cmd_share(installer: &Installer, json: bool) -> anyhow::Result<()> {
     }))?;
 
     if json {
-        println!("{}", serde_json::json!({"manifest": manifest, "count": manifest.len()}));
+        println!(
+            "{}",
+            serde_json::json!({"manifest": manifest, "count": manifest.len()})
+        );
         return Ok(());
     }
 
     println!("{}", "Your skill manifest:".cyan().bold());
     println!("{}", manifest_str.dimmed());
     println!();
-    println!("{}", "Save this to a file or gist, then restore with:".dimmed());
+    println!(
+        "{}",
+        "Save this to a file or gist, then restore with:".dimmed()
+    );
     println!("  skillhub restore <url-or-path>");
     Ok(())
 }
 
-fn cmd_restore(client: &RegistryClient, installer: &Installer, source: &str, json: bool) -> anyhow::Result<()> {
+fn cmd_restore(
+    client: &RegistryClient,
+    installer: &Installer,
+    source: &str,
+    json: bool,
+) -> anyhow::Result<()> {
     // Fetch manifest (from URL or local file)
     let raw = if source.starts_with("http://") || source.starts_with("https://") {
         let body = client.gh_get(source)?;
         body
     } else {
-        std::fs::read_to_string(source)
-            .map_err(|e| SkillHubError::Io(e))?
+        std::fs::read_to_string(source).map_err(|e| SkillHubError::Io(e))?
     };
 
     // Parse manifest
@@ -161,14 +189,17 @@ fn cmd_restore(client: &RegistryClient, installer: &Installer, source: &str, jso
         version: String,
     }
 
-    let manifest: Manifest = serde_json::from_str(&raw)
-        .map_err(|e| SkillHubError::ConfigParse(e.to_string()))?;
+    let manifest: Manifest =
+        serde_json::from_str(&raw).map_err(|e| SkillHubError::ConfigParse(e.to_string()))?;
 
     let desired: Vec<String> = manifest.skills.iter().map(|s| s.name.clone()).collect();
 
     if desired.is_empty() {
         if json {
-            println!("{}", serde_json::json!({"error": "empty manifest", "installed": 0}));
+            println!(
+                "{}",
+                serde_json::json!({"error": "empty manifest", "installed": 0})
+            );
         } else {
             println!("{}", "Manifest is empty. Nothing to restore.".yellow());
         }
@@ -215,9 +246,20 @@ fn cmd_restore(client: &RegistryClient, installer: &Installer, source: &str, jso
     }
 
     if json {
-        println!("{}", serde_json::json!({"installed": installed, "skipped": skipped, "total": desired.len()}));
+        println!(
+            "{}",
+            serde_json::json!({"installed": installed, "skipped": skipped, "total": desired.len()})
+        );
     } else {
-        println!("{}", format!("Installed {}, skipped {} (already had).", installed, skipped).green().bold());
+        println!(
+            "{}",
+            format!(
+                "Installed {}, skipped {} (already had).",
+                installed, skipped
+            )
+            .green()
+            .bold()
+        );
     }
     Ok(())
 }
@@ -299,7 +341,10 @@ fn cmd_setup(json: bool) -> anyhow::Result<()> {
             config.deploy_agents = detected.agents.clone();
             println!("{}", "auto-deploy enabled".green());
         } else {
-            println!("{}", "skills will be stored only in ~/.skillhub/skills/".dimmed());
+            println!(
+                "{}",
+                "skills will be stored only in ~/.skillhub/skills/".dimmed()
+            );
         }
     } else {
         println!("{}", "No AI agents detected on this machine.".dimmed());
@@ -344,7 +389,12 @@ fn cmd_setup(json: bool) -> anyhow::Result<()> {
 // doctor
 // ---------------------------------------------------------------------------
 
-fn cmd_doctor(client: &RegistryClient, _installer: &Installer, fix: bool, json: bool) -> anyhow::Result<()> {
+fn cmd_doctor(
+    client: &RegistryClient,
+    _installer: &Installer,
+    fix: bool,
+    json: bool,
+) -> anyhow::Result<()> {
     let config = Config::load()?;
     let mut issues: Vec<String> = Vec::new();
     let mut fixed: Vec<String> = Vec::new();
@@ -378,7 +428,8 @@ fn cmd_doctor(client: &RegistryClient, _installer: &Installer, fix: bool, json: 
 
     // Check 3: Cache exists and is fresh
     let cache_path = config.cache_dir.join("registry.json");
-    let cache_age = cache_path.metadata()
+    let cache_age = cache_path
+        .metadata()
         .and_then(|m| m.modified())
         .ok()
         .and_then(|t| t.elapsed().ok());
@@ -387,7 +438,10 @@ fn cmd_doctor(client: &RegistryClient, _installer: &Installer, fix: bool, json: 
         issues.push("registry cache missing, run 'skillhub update'".to_string());
     } else if let Some(age) = cache_age {
         if age.as_secs() > 86400 {
-            issues.push(format!("registry cache is {} old", humantime(age.as_secs())));
+            issues.push(format!(
+                "registry cache is {} old",
+                humantime(age.as_secs())
+            ));
             if fix {
                 match client.fetch() {
                     Ok(r) => {
@@ -441,19 +495,25 @@ fn cmd_doctor(client: &RegistryClient, _installer: &Installer, fix: bool, json: 
     }
 
     if json {
-        println!("{}", serde_json::json!({
-            "healthy": issues.is_empty(),
-            "issues": issues,
-            "fixed": fixed,
-            "fix_applied": fix,
-        }));
+        println!(
+            "{}",
+            serde_json::json!({
+                "healthy": issues.is_empty(),
+                "issues": issues,
+                "fixed": fixed,
+                "fix_applied": fix,
+            })
+        );
         return Ok(());
     }
 
     if issues.is_empty() {
         println!("{}", "All checks passed.".green().bold());
     } else {
-        println!("{}", format!("{} issue(s) found:", issues.len()).yellow().bold());
+        println!(
+            "{}",
+            format!("{} issue(s) found:", issues.len()).yellow().bold()
+        );
         for i in &issues {
             println!("  {}", i.yellow());
         }
@@ -490,18 +550,21 @@ fn cmd_agents(json: bool) -> anyhow::Result<()> {
     let config = Config::load()?;
 
     if json {
-        let agents: Vec<serde_json::Value> = agent::AgentKind::all().iter().map(|a| {
-            let path = a.detect_home().map(|p| p.display().to_string());
-            let installed = a.detect();
-            let deploying = config.deploy_agents.contains(a);
-            serde_json::json!({
-                "name": a.label(),
-                "kind_id": a.kind_id(),
-                "path": path,
-                "detected": installed,
-                "deploying": deploying
+        let agents: Vec<serde_json::Value> = agent::AgentKind::all()
+            .iter()
+            .map(|a| {
+                let path = a.detect_home().map(|p| p.display().to_string());
+                let installed = a.detect();
+                let deploying = config.deploy_agents.contains(a);
+                serde_json::json!({
+                    "name": a.label(),
+                    "kind_id": a.kind_id(),
+                    "path": path,
+                    "detected": installed,
+                    "deploying": deploying
+                })
             })
-        }).collect();
+            .collect();
         println!("{}", serde_json::json!({"agents": agents}));
         return Ok(());
     }
@@ -532,14 +595,23 @@ fn cmd_agents(json: bool) -> anyhow::Result<()> {
 // search
 // ---------------------------------------------------------------------------
 
-fn cmd_search(client: &RegistryClient, query: &str, verbose: bool, github: bool, json: bool) -> anyhow::Result<()> {
+fn cmd_search(
+    client: &RegistryClient,
+    query: &str,
+    verbose: bool,
+    github: bool,
+    json: bool,
+) -> anyhow::Result<()> {
     let mut results = match client.search(query) {
         Ok(r) => r,
         Err(SkillHubError::RegistryNotFound) => {
             if json {
                 println!("{}", json_err("no registry cache"));
             } else {
-                println!("{}", "No registry cache. Run 'skillhub update' first.".yellow());
+                println!(
+                    "{}",
+                    "No registry cache. Run 'skillhub update' first.".yellow()
+                );
             }
             return Ok(());
         }
@@ -567,7 +639,10 @@ fn cmd_search(client: &RegistryClient, query: &str, verbose: bool, github: bool,
 
     if results.is_empty() {
         if json {
-            println!("{}", serde_json::json!({"skills": [], "count": 0, "query": query}));
+            println!(
+                "{}",
+                serde_json::json!({"skills": [], "count": 0, "query": query})
+            );
         } else {
             println!("{}", "Nothing found.".yellow());
             println!("Try a different query, or 'skillhub update' to refresh.");
@@ -576,18 +651,25 @@ fn cmd_search(client: &RegistryClient, query: &str, verbose: bool, github: bool,
     }
 
     if json {
-        println!("{}", serde_json::json!({
-            "skills": results,
-            "count": results.len(),
-            "query": query,
-            "sources": {"registry": registry_count, "github": gh_count}
-        }));
+        println!(
+            "{}",
+            serde_json::json!({
+                "skills": results,
+                "count": results.len(),
+                "query": query,
+                "sources": {"registry": registry_count, "github": gh_count}
+            })
+        );
         return Ok(());
     }
 
     if github && gh_count > 0 {
         let src = format!("registry:{}  github:{}", registry_count, gh_count);
-        println!("{} ({})", format!("{} result(s):", results.len()).green().bold(), src.dimmed());
+        println!(
+            "{} ({})",
+            format!("{} result(s):", results.len()).green().bold(),
+            src.dimmed()
+        );
     } else {
         println!("{}", format!("{} result(s):", results.len()).green().bold());
     }
@@ -630,7 +712,10 @@ fn cmd_install(
     json: bool,
 ) -> anyhow::Result<()> {
     if json {
-        println!("{}", json_err("install is interactive, use --yes to skip confirmation with --json"));
+        println!(
+            "{}",
+            json_err("install is interactive, use --yes to skip confirmation with --json")
+        );
         return Ok(());
     }
     let ref_ = SkillRef::parse(name)?;
@@ -641,13 +726,16 @@ fn cmd_install(
     }
 
     let skill = match client.load_cache() {
-        Ok(r) => r.skills.into_iter()
+        Ok(r) => r
+            .skills
+            .into_iter()
             .find(|s| ref_.matches(s))
             .ok_or(SkillHubError::SkillNotFound(name.to_string()))?,
         Err(_) => {
             println!("{}", "No cache, fetching registry...".dimmed());
             let r = client.fetch()?;
-            r.skills.into_iter()
+            r.skills
+                .into_iter()
                 .find(|s| ref_.matches(s))
                 .ok_or(SkillHubError::SkillNotFound(name.to_string()))?
         }
@@ -659,7 +747,10 @@ fn cmd_install(
             Ok(c) => c,
             Err(e) => {
                 if !json {
-                    println!("{}", format!("security scan: could not download — {}", e).yellow());
+                    println!(
+                        "{}",
+                        format!("security scan: could not download — {}", e).yellow()
+                    );
                 }
                 String::new()
             }
@@ -682,7 +773,13 @@ fn cmd_install(
                         scanner::Severity::Medium => "MED".yellow(),
                         scanner::Severity::Low => "low".dimmed(),
                     };
-                    println!("  [{}] {} (line {}): {}", sev, f.kind, f.line, f.snippet.dimmed());
+                    println!(
+                        "  [{}] {} (line {}): {}",
+                        sev,
+                        f.kind,
+                        f.line,
+                        f.snippet.dimmed()
+                    );
                 }
                 if !yes {
                     let ok = dialoguer::Confirm::new()
@@ -739,7 +836,8 @@ fn cmd_install(
         };
 
         // Download content and write to project file
-        let content = installer.download_skill(&skill.download_url)
+        let content = installer
+            .download_skill(&skill.download_url)
             .unwrap_or_else(|_| format!("# {}\n\n{}", skill.name, skill.description));
 
         // Append a reference to the skill
@@ -752,9 +850,17 @@ fn cmd_install(
         std::fs::write(&pfile, existing + &skill_ref)?;
 
         if json {
-            println!("{}", serde_json::json!({"installed_to_project": true, "agent": agent_label, "file": pfile.display().to_string()}));
+            println!(
+                "{}",
+                serde_json::json!({"installed_to_project": true, "agent": agent_label, "file": pfile.display().to_string()})
+            );
         } else {
-            println!("{}", format!("Installed to project file: {:?} ({})", pfile, agent_label).green().bold());
+            println!(
+                "{}",
+                format!("Installed to project file: {:?} ({})", pfile, agent_label)
+                    .green()
+                    .bold()
+            );
         }
     } else {
         let paths = installer.install(&skill)?;
@@ -799,7 +905,10 @@ fn cmd_uninstall(installer: &Installer, name: &str, yes: bool, json: bool) -> an
 
     let path = installer.uninstall(&ref_)?;
     if json {
-        println!("{}", serde_json::json!({"removed": true, "name": name, "path": path.display().to_string()}));
+        println!(
+            "{}",
+            serde_json::json!({"removed": true, "name": name, "path": path.display().to_string()})
+        );
     } else {
         println!("{}", format!("removed {:?}", path).dimmed());
     }
@@ -814,17 +923,23 @@ fn cmd_list(installer: &Installer, json: bool) -> anyhow::Result<()> {
     let items = installer.list_installed()?;
 
     if json {
-        let skills: Vec<serde_json::Value> = items.iter().map(|(path, skill)| {
-            serde_json::json!({
-                "name": skill.name,
-                "description": skill.description,
-                "author": skill.author,
-                "version": skill.version,
-                "tags": skill.tags,
-                "path": path.display().to_string()
+        let skills: Vec<serde_json::Value> = items
+            .iter()
+            .map(|(path, skill)| {
+                serde_json::json!({
+                    "name": skill.name,
+                    "description": skill.description,
+                    "author": skill.author,
+                    "version": skill.version,
+                    "tags": skill.tags,
+                    "path": path.display().to_string()
+                })
             })
-        }).collect();
-        println!("{}", serde_json::json!({"skills": skills, "count": skills.len()}));
+            .collect();
+        println!(
+            "{}",
+            serde_json::json!({"skills": skills, "count": skills.len()})
+        );
         return Ok(());
     }
 
@@ -867,7 +982,10 @@ fn cmd_update(client: &RegistryClient, json: bool) -> anyhow::Result<()> {
     let n = r.skills.len();
     client.save_cache(&r)?;
     if json {
-        println!("{}", serde_json::json!({"skills_available": n, "status": "ok"}));
+        println!(
+            "{}",
+            serde_json::json!({"skills_available": n, "status": "ok"})
+        );
     } else {
         println!("{}", format!("{} skills available.", n).green().bold());
     }
@@ -902,7 +1020,10 @@ fn cmd_upgrade(
     let installed = installer.list_installed()?;
     if installed.is_empty() {
         if json {
-            println!("{}", serde_json::json!({"status": "nothing to upgrade", "upgraded": 0}));
+            println!(
+                "{}",
+                serde_json::json!({"status": "nothing to upgrade", "upgraded": 0})
+            );
         } else {
             println!("{}", "Nothing installed. Nothing to upgrade.".yellow());
         }
@@ -915,7 +1036,10 @@ fn cmd_upgrade(
             if json {
                 println!("{}", json_err("no registry cache"));
             } else {
-                println!("{}", "No registry cache. Run 'skillhub update' first.".yellow());
+                println!(
+                    "{}",
+                    "No registry cache. Run 'skillhub update' first.".yellow()
+                );
             }
             return Ok(());
         }
@@ -937,7 +1061,10 @@ fn cmd_upgrade(
 
     if to_upgrade.is_empty() {
         if json {
-            println!("{}", serde_json::json!({"status": "up to date", "upgraded": 0}));
+            println!(
+                "{}",
+                serde_json::json!({"status": "up to date", "upgraded": 0})
+            );
         } else {
             println!("{}", "All skills are up to date.".green());
         }
@@ -946,13 +1073,26 @@ fn cmd_upgrade(
 
     if dry_run {
         if json {
-            println!("{}", serde_json::json!({"to_upgrade": to_upgrade.iter().map(|(n, o, nv)| {
+            println!(
+                "{}",
+                serde_json::json!({"to_upgrade": to_upgrade.iter().map(|(n, o, nv)| {
                 serde_json::json!({"name": n, "old_version": o, "new_version": nv})
-            }).collect::<Vec<_>>(), "count": to_upgrade.len()}));
+            }).collect::<Vec<_>>(), "count": to_upgrade.len()})
+            );
         } else {
-            println!("{}", format!("{} skill(s) would upgrade:", to_upgrade.len()).yellow().bold());
+            println!(
+                "{}",
+                format!("{} skill(s) would upgrade:", to_upgrade.len())
+                    .yellow()
+                    .bold()
+            );
             for (name, old_v, new_v) in &to_upgrade {
-                println!("  {}  v{} → v{}", name.cyan(), old_v.dimmed(), new_v.green());
+                println!(
+                    "  {}  v{} → v{}",
+                    name.cyan(),
+                    old_v.dimmed(),
+                    new_v.green()
+                );
             }
             println!();
             println!("{}", "Run without --dry-run to upgrade.".dimmed());
@@ -974,9 +1114,7 @@ fn cmd_upgrade(
         }
 
         let ref_ = SkillRef::parse(name)?;
-        let reg_skill = registry.skills.iter()
-            .find(|s| ref_.matches(s))
-            .unwrap();
+        let reg_skill = registry.skills.iter().find(|s| ref_.matches(s)).unwrap();
 
         // remove old, install new
         let _ = installer.uninstall(&ref_);
@@ -989,9 +1127,15 @@ fn cmd_upgrade(
     }
 
     if json {
-        println!("{}", serde_json::json!({"status": "done", "upgraded": upgraded}));
+        println!(
+            "{}",
+            serde_json::json!({"status": "done", "upgraded": upgraded})
+        );
     } else {
-        println!("{}", format!("Upgraded {} skill(s).", upgraded).green().bold());
+        println!(
+            "{}",
+            format!("Upgraded {} skill(s).", upgraded).green().bold()
+        );
     }
     Ok(())
 }
@@ -1023,7 +1167,10 @@ fn cmd_info(client: &RegistryClient, name: &str, json: bool) -> anyhow::Result<(
     println!("  agents:   {}", skill.compatibility.agents.join(", "));
 
     if let Some(q) = &skill.quality {
-        println!("  quality:  {}/100  (security {}  clarity {})", q.score, q.security, q.clarity);
+        println!(
+            "  quality:  {}/100  (security {}  clarity {})",
+            q.score, q.security, q.clarity
+        );
     }
 
     println!();
@@ -1035,7 +1182,12 @@ fn cmd_info(client: &RegistryClient, name: &str, json: bool) -> anyhow::Result<(
 // publish
 // ---------------------------------------------------------------------------
 
-fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: bool) -> anyhow::Result<()> {
+fn cmd_publish(
+    client: &RegistryClient,
+    path: Option<&str>,
+    force: bool,
+    json: bool,
+) -> anyhow::Result<()> {
     let skill_path = path.unwrap_or("./SKILL.md");
     let content = std::fs::read_to_string(skill_path)
         .map_err(|e| anyhow::anyhow!("Cannot read {}: {}", skill_path, e))?;
@@ -1055,7 +1207,10 @@ fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: b
             anyhow::bail!("SKILL.md content is too short (minimum 50 chars)");
         }
         if !(content.contains("name:") || content.contains("Name:")) {
-            println!("{}", "warning: SKILL.md should contain a `name:` field".yellow());
+            println!(
+                "{}",
+                "warning: SKILL.md should contain a `name:` field".yellow()
+            );
         }
     }
 
@@ -1071,13 +1226,17 @@ fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: b
     // repo = skillhub/registry (path segments [0]/[1])
     let registry_url_parsed = url::Url::parse(client.registry_url())
         .map_err(|e| anyhow::anyhow!("invalid registry URL: {}", e))?;
-    let segments: Vec<String> = registry_url_parsed.path_segments()
+    let segments: Vec<String> = registry_url_parsed
+        .path_segments()
         .map(|s| s.filter(|p| !p.is_empty()).map(String::from).collect())
         .unwrap_or_default();
     let repo = if segments.len() >= 2 {
         format!("{}/{}", segments[0], segments[1])
     } else {
-        anyhow::bail!("cannot determine registry repo from URL: {}", client.registry_url());
+        anyhow::bail!(
+            "cannot determine registry repo from URL: {}",
+            client.registry_url()
+        );
     };
 
     let title = format!("skill submission: {}", skill_name);
@@ -1104,9 +1263,9 @@ fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: b
         anyhow::bail!("GitHub token required to publish. Run 'skillhub setup' first.");
     }
 
-    let resp = req.send_string(&body_str).map_err(|e| {
-        anyhow::anyhow!("Failed to create issue: {}", e)
-    })?;
+    let resp = req
+        .send_string(&body_str)
+        .map_err(|e| anyhow::anyhow!("Failed to create issue: {}", e))?;
 
     let status = resp.status();
     let resp_body = resp.into_string().unwrap_or_default();
@@ -1121,7 +1280,10 @@ fn cmd_publish(client: &RegistryClient, path: Option<&str>, force: bool, json: b
         .unwrap_or_else(|| api_url.clone());
 
     if json {
-        println!("{}", serde_json::json!({"status": "submitted", "url": issue_url, "name": skill_name}));
+        println!(
+            "{}",
+            serde_json::json!({"status": "submitted", "url": issue_url, "name": skill_name})
+        );
     } else {
         println!("{}", "Skill submitted!".green().bold());
         println!("  Review at: {}", issue_url);
@@ -1143,16 +1305,37 @@ fn today_str() -> String {
     let mut y = 1970i64;
     let mut remaining = days as i64;
     loop {
-        let days_in_year = if (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0) { 366 } else { 365 };
-        if remaining < days_in_year { break; }
+        let days_in_year = if (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0) {
+            366
+        } else {
+            365
+        };
+        if remaining < days_in_year {
+            break;
+        }
         remaining -= days_in_year;
         y += 1;
     }
     let is_leap = (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
-    let month_days: [i64; 12] = [31, if is_leap { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let month_days: [i64; 12] = [
+        31,
+        if is_leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
     let mut m = 1;
     for &md in &month_days {
-        if remaining < md { break; }
+        if remaining < md {
+            break;
+        }
         remaining -= md;
         m += 1;
     }
@@ -1165,9 +1348,15 @@ fn cmd_suggest(client: &RegistryClient, json: bool) -> anyhow::Result<()> {
 
     if config.last_suggest_date.as_deref() == Some(&today) {
         if json {
-            println!("{}", serde_json::json!({"error": "already suggested today"}));
+            println!(
+                "{}",
+                serde_json::json!({"error": "already suggested today"})
+            );
         } else {
-            println!("{}", "Already suggested today. Come back tomorrow.".yellow());
+            println!(
+                "{}",
+                "Already suggested today. Come back tomorrow.".yellow()
+            );
         }
         return Ok(());
     }
@@ -1179,7 +1368,10 @@ fn cmd_suggest(client: &RegistryClient, json: bool) -> anyhow::Result<()> {
             if json {
                 println!("{}", json_err("no registry cache"));
             } else {
-                println!("{}", "No registry cache. Run 'skillhub update' first.".yellow());
+                println!(
+                    "{}",
+                    "No registry cache. Run 'skillhub update' first.".yellow()
+                );
             }
             return Ok(());
         }
@@ -1195,7 +1387,9 @@ fn cmd_suggest(client: &RegistryClient, json: bool) -> anyhow::Result<()> {
     }
 
     // Simple pick: highest quality score, or first if no quality scores
-    let pick = registry.skills.iter()
+    let pick = registry
+        .skills
+        .iter()
         .max_by(|a, b| {
             let qa = a.quality.as_ref().map(|q| q.score).unwrap_or(0);
             let qb = b.quality.as_ref().map(|q| q.score).unwrap_or(0);
@@ -1207,15 +1401,18 @@ fn cmd_suggest(client: &RegistryClient, json: bool) -> anyhow::Result<()> {
     config.save()?;
 
     if json {
-        println!("{}", serde_json::json!({
-            "suggestion": {
-                "name": pick.name,
-                "description": pick.description,
-                "author": pick.author,
-                "version": pick.version,
-                "agents": pick.compatibility.agents,
-            }
-        }));
+        println!(
+            "{}",
+            serde_json::json!({
+                "suggestion": {
+                    "name": pick.name,
+                    "description": pick.description,
+                    "author": pick.author,
+                    "version": pick.version,
+                    "agents": pick.compatibility.agents,
+                }
+            })
+        );
         return Ok(());
     }
 
@@ -1247,10 +1444,13 @@ fn cmd_completions(shell: &str, json: bool) -> anyhow::Result<()> {
 
     if json {
         let shells = ["bash", "zsh", "fish", "powershell"];
-        println!("{}", serde_json::json!({
-            "supported_shells": shells,
-            "usage": format!("source <(skillhub completions {})", shell)
-        }));
+        println!(
+            "{}",
+            serde_json::json!({
+                "supported_shells": shells,
+                "usage": format!("source <(skillhub completions {})", shell)
+            })
+        );
         return Ok(());
     }
 
@@ -1260,7 +1460,10 @@ fn cmd_completions(shell: &str, json: bool) -> anyhow::Result<()> {
         "fish" => generate(Fish, &mut cmd, name, &mut io::stdout()),
         "powershell" => generate(PowerShell, &mut cmd, name, &mut io::stdout()),
         other => {
-            eprintln!("Unknown shell '{}'. Supported: bash, zsh, fish, powershell", other);
+            eprintln!(
+                "Unknown shell '{}'. Supported: bash, zsh, fish, powershell",
+                other
+            );
             std::process::exit(1);
         }
     }
@@ -1272,7 +1475,12 @@ fn cmd_completions(shell: &str, json: bool) -> anyhow::Result<()> {
 // import
 // ---------------------------------------------------------------------------
 
-fn cmd_import(installer: &Installer, source: &str, dry_run: bool, json: bool) -> anyhow::Result<()> {
+fn cmd_import(
+    installer: &Installer,
+    source: &str,
+    dry_run: bool,
+    json: bool,
+) -> anyhow::Result<()> {
     let dir = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
 
     let source_dir = match source {
@@ -1285,7 +1493,10 @@ fn cmd_import(installer: &Installer, source: &str, dry_run: bool, json: bool) ->
 
     if !source_dir.exists() {
         if json {
-            println!("{}", serde_json::json!({"error": format!("source not found: {}", source_dir.display()), "imported": 0}));
+            println!(
+                "{}",
+                serde_json::json!({"error": format!("source not found: {}", source_dir.display()), "imported": 0})
+            );
         } else {
             println!("{}", format!("Source not found: {:?}", source_dir).yellow());
         }
@@ -1300,7 +1511,8 @@ fn cmd_import(installer: &Installer, source: &str, dry_run: bool, json: bool) ->
             if path.is_dir() {
                 continue;
             }
-            let file_name = path.file_stem()
+            let file_name = path
+                .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or("unknown");
 
@@ -1320,7 +1532,12 @@ fn cmd_import(installer: &Installer, source: &str, dry_run: bool, json: bool) ->
                 if json {
                     // collected below
                 } else {
-                    println!("  would import: @{}/{} ({})", owner, skill_name, path.display());
+                    println!(
+                        "  would import: @{}/{} ({})",
+                        owner,
+                        skill_name,
+                        path.display()
+                    );
                 }
             } else {
                 let skill_dir = installer.config.skills_dir.join(owner).join(&skill_name);
@@ -1339,7 +1556,10 @@ fn cmd_import(installer: &Installer, source: &str, dry_run: bool, json: bool) ->
                     "download_url": "",
                     "compatibility": {"agents": [source]},
                 });
-                let _ = std::fs::write(skill_dir.join("meta.json"), serde_json::to_string_pretty(&meta).unwrap_or_default());
+                let _ = std::fs::write(
+                    skill_dir.join("meta.json"),
+                    serde_json::to_string_pretty(&meta).unwrap_or_default(),
+                );
                 imported += 1;
             }
         }
@@ -1351,7 +1571,9 @@ fn cmd_import(installer: &Installer, source: &str, dry_run: bool, json: bool) ->
             if let Ok(entries) = std::fs::read_dir(&source_dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
-                    if path.is_dir() { continue; }
+                    if path.is_dir() {
+                        continue;
+                    }
                     let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("x");
                     v.push(serde_json::json!({"name": format!("@imported/{}", name), "path": path.display().to_string()}));
                 }
@@ -1360,11 +1582,22 @@ fn cmd_import(installer: &Installer, source: &str, dry_run: bool, json: bool) ->
         } else {
             vec![]
         };
-        println!("{}", serde_json::json!({"imported": imported, "dry_run": dry_run, "skills": skills, "source": source}));
+        println!(
+            "{}",
+            serde_json::json!({"imported": imported, "dry_run": dry_run, "skills": skills, "source": source})
+        );
     } else if dry_run {
-        println!("{}", "Dry run complete. Run without --dry-run to import.".dimmed());
+        println!(
+            "{}",
+            "Dry run complete. Run without --dry-run to import.".dimmed()
+        );
     } else {
-        println!("{}", format!("Imported {} skill(s) from {}.", imported, source).green().bold());
+        println!(
+            "{}",
+            format!("Imported {} skill(s) from {}.", imported, source)
+                .green()
+                .bold()
+        );
     }
 
     Ok(())
@@ -1395,31 +1628,59 @@ fn cmd_stats(client: &RegistryClient, installer: &Installer, json: bool) -> anyh
         }
     }
 
-    let registry_skills = client.load_cache().ok().map(|r| r.skills.len()).unwrap_or(0);
+    let registry_skills = client
+        .load_cache()
+        .ok()
+        .map(|r| r.skills.len())
+        .unwrap_or(0);
     let deploy_count = installer.config.deploy_agents.len();
 
     if json {
-        println!("{}", serde_json::json!({
-            "installed": installed_count,
-            "authors": authors.len(),
-            "agent_compatibility": agent_tags.len(),
-            "agents_detected": agents_found,
-            "agents_configured_for_deploy": deploy_count,
-            "registry_skills_available": registry_skills,
-        }));
+        println!(
+            "{}",
+            serde_json::json!({
+                "installed": installed_count,
+                "authors": authors.len(),
+                "agent_compatibility": agent_tags.len(),
+                "agents_detected": agents_found,
+                "agents_configured_for_deploy": deploy_count,
+                "registry_skills_available": registry_skills,
+            })
+        );
         return Ok(());
     }
 
     println!("{}", "Statistics".cyan().bold());
-    println!("  installed skills:      {}", installed_count.to_string().green());
-    println!("  unique authors:        {}", authors.len().to_string().cyan());
-    println!("  agent compatibility:   {}", agent_tags.len().to_string().yellow());
-    println!("  agents detected:       {}", agents_found.len().to_string().green());
-    println!("  agents configured:     {}", deploy_count.to_string().cyan());
-    println!("  registry skills:       {}", registry_skills.to_string().green());
+    println!(
+        "  installed skills:      {}",
+        installed_count.to_string().green()
+    );
+    println!(
+        "  unique authors:        {}",
+        authors.len().to_string().cyan()
+    );
+    println!(
+        "  agent compatibility:   {}",
+        agent_tags.len().to_string().yellow()
+    );
+    println!(
+        "  agents detected:       {}",
+        agents_found.len().to_string().green()
+    );
+    println!(
+        "  agents configured:     {}",
+        deploy_count.to_string().cyan()
+    );
+    println!(
+        "  registry skills:       {}",
+        registry_skills.to_string().green()
+    );
 
     if !agents_found.is_empty() {
-        println!("  detected:              {}", agents_found.join(", ").dimmed());
+        println!(
+            "  detected:              {}",
+            agents_found.join(", ").dimmed()
+        );
     }
 
     Ok(())
@@ -1430,15 +1691,30 @@ fn cmd_stats(client: &RegistryClient, installer: &Installer, json: bool) -> anyh
 // ---------------------------------------------------------------------------
 
 fn badge_color(n: usize) -> &'static str {
-    if n == 0 { "lightgrey" } else if n < 5 { "yellow" } else if n < 15 { "green" } else { "brightgreen" }
+    if n == 0 {
+        "lightgrey"
+    } else if n < 5 {
+        "yellow"
+    } else if n < 15 {
+        "green"
+    } else {
+        "brightgreen"
+    }
 }
 
 fn cmd_badge(installer: &Installer, fmt: &str, json: bool) -> anyhow::Result<()> {
     let installed = installer.list_installed()?.len();
-    let url = format!("https://img.shields.io/badge/skills-{}-{}", installed, badge_color(installed));
+    let url = format!(
+        "https://img.shields.io/badge/skills-{}-{}",
+        installed,
+        badge_color(installed)
+    );
 
     if json {
-        println!("{}", serde_json::json!({"badge_url": url, "installed": installed, "format": fmt}));
+        println!(
+            "{}",
+            serde_json::json!({"badge_url": url, "installed": installed, "format": fmt})
+        );
         return Ok(());
     }
 
@@ -1447,7 +1723,10 @@ fn cmd_badge(installer: &Installer, fmt: &str, json: bool) -> anyhow::Result<()>
         "url" => println!("{}", url),
         "html" => println!("<img src=\"{}\" alt=\"skills: {}\" />", url, installed),
         other => {
-            println!("{}", format!("unsupported format '{}', use: markdown, url, html", other).yellow());
+            println!(
+                "{}",
+                format!("unsupported format '{}', use: markdown, url, html", other).yellow()
+            );
         }
     }
 
@@ -1458,7 +1737,13 @@ fn cmd_badge(installer: &Installer, fmt: &str, json: bool) -> anyhow::Result<()>
 // sync
 // ---------------------------------------------------------------------------
 
-fn cmd_sync(client: &RegistryClient, installer: &Installer, action: &str, target: Option<&str>, json: bool) -> anyhow::Result<()> {
+fn cmd_sync(
+    client: &RegistryClient,
+    installer: &Installer,
+    action: &str,
+    target: Option<&str>,
+    json: bool,
+) -> anyhow::Result<()> {
     match action {
         "export" => {
             let items = installer.list_installed()?;
@@ -1483,9 +1768,17 @@ fn cmd_sync(client: &RegistryClient, installer: &Installer, action: &str, target
             if let Some(path) = target {
                 std::fs::write(path, &output)?;
                 if json {
-                    println!("{}", serde_json::json!({"exported": items.len(), "path": path}));
+                    println!(
+                        "{}",
+                        serde_json::json!({"exported": items.len(), "path": path})
+                    );
                 } else {
-                    println!("{}", format!("Exported {} skill(s) to {}", items.len(), path).green().bold());
+                    println!(
+                        "{}",
+                        format!("Exported {} skill(s) to {}", items.len(), path)
+                            .green()
+                            .bold()
+                    );
                 }
             } else {
                 if json {
@@ -1498,13 +1791,16 @@ fn cmd_sync(client: &RegistryClient, installer: &Installer, action: &str, target
         "import" => {
             let raw = match target {
                 Some(src) if src.starts_with("http") => client.gh_get(src)?,
-                Some(src) => std::fs::read_to_string(src)
-                    .map_err(|e| SkillHubError::Io(e))?,
+                Some(src) => std::fs::read_to_string(src).map_err(|e| SkillHubError::Io(e))?,
                 None => {
                     if json {
                         println!("{}", json_err("import requires a file path or URL"));
                     } else {
-                        println!("{}", "Import requires a file path or URL: skillhub sync import <path|url>".yellow());
+                        println!(
+                            "{}",
+                            "Import requires a file path or URL: skillhub sync import <path|url>"
+                                .yellow()
+                        );
                     }
                     return Ok(());
                 }
@@ -1549,16 +1845,27 @@ fn cmd_sync(client: &RegistryClient, installer: &Installer, action: &str, target
             }
 
             if json {
-                println!("{}", serde_json::json!({"imported": imported, "skipped": skipped}));
+                println!(
+                    "{}",
+                    serde_json::json!({"imported": imported, "skipped": skipped})
+                );
             } else {
-                println!("{}", format!("Imported {}, skipped {}.", imported, skipped).green().bold());
+                println!(
+                    "{}",
+                    format!("Imported {}, skipped {}.", imported, skipped)
+                        .green()
+                        .bold()
+                );
             }
         }
         other => {
             if json {
                 println!("{}", json_err(&format!("unknown sync action: {}", other)));
             } else {
-                println!("{}", format!("Unknown sync action '{}'. Use: export, import", other).yellow());
+                println!(
+                    "{}",
+                    format!("Unknown sync action '{}'. Use: export, import", other).yellow()
+                );
             }
         }
     }
@@ -1581,7 +1888,10 @@ fn cmd_migrate(installer: &Installer, rollback: bool, json: bool) -> anyhow::Res
     if rollback {
         // Rollback: move skills back to flat dir (unlikely to be needed)
         if json {
-            println!("{}", serde_json::json!({"status": "rollback not needed", "current_version": 2}));
+            println!(
+                "{}",
+                serde_json::json!({"status": "rollback not needed", "current_version": 2})
+            );
         } else {
             println!("{}", "Current layout is v2. Nothing to roll back.".yellow());
             println!("Skills are in {}", new_skills.to_string_lossy().dimmed());
@@ -1600,7 +1910,8 @@ fn cmd_migrate(installer: &Installer, rollback: bool, json: bool) -> anyhow::Res
                 if path.is_dir() {
                     continue;
                 }
-                let file_name = path.file_stem()
+                let file_name = path
+                    .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("unknown")
                     .to_string();
@@ -1629,7 +1940,10 @@ fn cmd_migrate(installer: &Installer, rollback: bool, json: bool) -> anyhow::Res
                     "download_url": "",
                     "compatibility": {"agents": []},
                 });
-                let _ = std::fs::write(skill_dir.join("meta.json"), serde_json::to_string_pretty(&meta).unwrap_or_default());
+                let _ = std::fs::write(
+                    skill_dir.join("meta.json"),
+                    serde_json::to_string_pretty(&meta).unwrap_or_default(),
+                );
                 migrated += 1;
             }
         }
@@ -1639,9 +1953,17 @@ fn cmd_migrate(installer: &Installer, rollback: bool, json: bool) -> anyhow::Res
     std::fs::create_dir_all(&new_cache).ok();
 
     if json {
-        println!("{}", serde_json::json!({"migrated": migrated, "skipped": skipped, "rollback": rollback}));
+        println!(
+            "{}",
+            serde_json::json!({"migrated": migrated, "skipped": skipped, "rollback": rollback})
+        );
     } else if migrated > 0 {
-        println!("{}", format!("Migrated {} skill(s), skipped {}.", migrated, skipped).green().bold());
+        println!(
+            "{}",
+            format!("Migrated {} skill(s), skipped {}.", migrated, skipped)
+                .green()
+                .bold()
+        );
     } else {
         println!("{}", "No migration needed.".green());
     }

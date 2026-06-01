@@ -14,7 +14,10 @@ pub struct Installer {
 
 impl Installer {
     pub fn new(config: Config) -> Self {
-        Installer { config, no_progress: false }
+        Installer {
+            config,
+            no_progress: false,
+        }
     }
 
     pub fn install(&self, skill: &Skill) -> Result<Vec<PathBuf>> {
@@ -73,7 +76,8 @@ impl Installer {
     }
 
     pub fn is_installed(&self, reference: &SkillRef) -> Result<bool> {
-        Ok(self.list_installed()?
+        Ok(self
+            .list_installed()?
             .into_iter()
             .any(|(_, s)| reference.matches(&s)))
     }
@@ -113,16 +117,18 @@ impl Installer {
                 out.push((
                     skill_dir.path(),
                     Skill {
-                        name: format!("@{}/{}", owner_name.to_string_lossy(), skill_name.to_string_lossy()),
+                        name: format!(
+                            "@{}/{}",
+                            owner_name.to_string_lossy(),
+                            skill_name.to_string_lossy()
+                        ),
                         description: String::new(),
                         author: owner_name.to_string_lossy().to_string(),
                         version: String::new(),
                         tags: vec![],
                         download_url: String::new(),
                         checksum: None,
-                        compatibility: crate::registry::Compatibility {
-                            agents: vec![],
-                        },
+                        compatibility: crate::registry::Compatibility { agents: vec![] },
                         quality: None,
                     },
                 ));
@@ -201,7 +207,11 @@ mod tests {
         let dir = tmp.path().join("skills").join("alice").join("test-s");
         fs::create_dir_all(&dir).unwrap();
         let skill = test_skill("@alice/test-s");
-        fs::write(dir.join("meta.json"), serde_json::to_string_pretty(&skill).unwrap()).unwrap();
+        fs::write(
+            dir.join("meta.json"),
+            serde_json::to_string_pretty(&skill).unwrap(),
+        )
+        .unwrap();
 
         let cfg = Config {
             registry_url: String::new(),

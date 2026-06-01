@@ -30,15 +30,30 @@ pub fn scan(content: &str) -> ScanResult {
 
     // Check 1: prompt injection patterns
     let injection_patterns: HashMap<&str, (&str, Severity)> = [
-        ("ignore previous instructions", ("prompt-injection", Severity::High)),
-        ("ignore all previous instructions", ("prompt-injection", Severity::High)),
+        (
+            "ignore previous instructions",
+            ("prompt-injection", Severity::High),
+        ),
+        (
+            "ignore all previous instructions",
+            ("prompt-injection", Severity::High),
+        ),
         ("disregard previous", ("prompt-injection", Severity::High)),
         ("you are now", ("prompt-injection", Severity::Medium)),
-        ("from now on you are", ("prompt-injection", Severity::Medium)),
+        (
+            "from now on you are",
+            ("prompt-injection", Severity::Medium),
+        ),
         ("system prompt", ("prompt-injection", Severity::High)),
         ("you must ignore", ("prompt-injection", Severity::High)),
-        ("override your instructions", ("prompt-injection", Severity::High)),
-    ].iter().cloned().collect();
+        (
+            "override your instructions",
+            ("prompt-injection", Severity::High),
+        ),
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     // Check 2: data exfiltration patterns
     let exfil_patterns: HashMap<&str, (&str, Severity)> = [
@@ -52,7 +67,10 @@ pub fn scan(content: &str) -> ScanResult {
         ("ncat --exec", ("data-exfiltration", Severity::High)),
         ("eval $(", ("data-exfiltration", Severity::Medium)),
         ("eval $(curl", ("data-exfiltration", Severity::High)),
-    ].iter().cloned().collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     // Check 3: hidden unicode characters
     let hidden_chars: Vec<(char, &str, Severity)> = vec![
@@ -146,7 +164,11 @@ mod tests {
     fn rtl_override_flagged() {
         let r = scan("eval \u{202E}system(\"ls\")");
         assert!(!r.passed);
-        assert!(r.findings.iter().any(|f| f.kind == "right-to-left-override"));
+        assert!(
+            r.findings
+                .iter()
+                .any(|f| f.kind == "right-to-left-override")
+        );
     }
 
     #[test]
@@ -163,7 +185,8 @@ mod tests {
 
     #[test]
     fn no_false_positives() {
-        let r = scan("# Skill for curl-based API testing\n\nThis skill uses curl to test REST APIs.\n");
+        let r =
+            scan("# Skill for curl-based API testing\n\nThis skill uses curl to test REST APIs.\n");
         // should NOT trigger because "curl | bash" is not present
         assert!(r.findings.is_empty());
     }

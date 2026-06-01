@@ -45,12 +45,14 @@ pub fn download_with_progress(
 ) -> Result<String, crate::error::SkillHubError> {
     use std::io::Read;
 
-    let parsed: url::Url = url.parse().map_err(|e| {
-        crate::error::SkillHubError::GitHubApi(format!("bad url: {}", e))
-    })?;
+    let parsed: url::Url = url
+        .parse()
+        .map_err(|e| crate::error::SkillHubError::GitHubApi(format!("bad url: {}", e)))?;
 
     if parsed.scheme() != "https" {
-        return Err(crate::error::SkillHubError::GitHubApi("https required".to_string()));
+        return Err(crate::error::SkillHubError::GitHubApi(
+            "https required".to_string(),
+        ));
     }
 
     let ok_hosts = [
@@ -60,7 +62,10 @@ pub fn download_with_progress(
     ];
     let host = parsed.host_str().unwrap_or("");
     if !ok_hosts.contains(&host) {
-        return Err(crate::error::SkillHubError::GitHubApi(format!("host not allowed: {}", host)));
+        return Err(crate::error::SkillHubError::GitHubApi(format!(
+            "host not allowed: {}",
+            host
+        )));
     }
 
     let mut req = ureq::get(parsed.as_str()).set("User-Agent", "skillhub/0.1.0");
@@ -70,11 +75,12 @@ pub fn download_with_progress(
         req = req.set("Authorization", &format!("Bearer {}", t));
     }
 
-    let resp = req.call().map_err(|e| {
-        crate::error::SkillHubError::GitHubApi(format!("download failed: {}", e))
-    })?;
+    let resp = req
+        .call()
+        .map_err(|e| crate::error::SkillHubError::GitHubApi(format!("download failed: {}", e)))?;
 
-    let total = resp.header("Content-Length")
+    let total = resp
+        .header("Content-Length")
         .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(0);
 
@@ -101,9 +107,9 @@ pub fn download_with_progress(
         }
         bar.finish_and_clear();
     } else {
-        reader.read_to_string(&mut body).map_err(|e| {
-            crate::error::SkillHubError::GitHubApi(format!("read error: {}", e))
-        })?;
+        reader
+            .read_to_string(&mut body)
+            .map_err(|e| crate::error::SkillHubError::GitHubApi(format!("read error: {}", e)))?;
     }
 
     Ok(body)
