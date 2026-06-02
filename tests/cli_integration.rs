@@ -21,7 +21,7 @@ fn version_works() {
     let out = binary().arg("--version").output().expect("run");
     assert!(out.status.success());
     let s = String::from_utf8_lossy(&out.stdout);
-    assert!(s.contains("0.1.0"));
+    assert!(s.contains(env!("CARGO_PKG_VERSION")));
 }
 
 #[test]
