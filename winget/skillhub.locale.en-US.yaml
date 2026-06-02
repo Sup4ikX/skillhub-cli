@@ -1,15 +1,23 @@
-Id: SkillHub.SkillHub
+PackageIdentifier: SkillHub.SkillHub
+PackageVersion: $VERSION
+PackageLocale: en-US
 Publisher: SkillHub
-Name: SkillHub
 PackageName: SkillHub
 License: MIT
 ShortDescription: Universal skill registry for AI coding agents
-Description: SkillHub is a universal skill registry for AI coding agents. Install, search, and manage skills across 30+ AI agents.
+Description: SkillHub is a universal skill registry for AI coding agents. Install, search, audit and manage reusable skills across 30+ agents: Claude Code, Codex, Cursor, Copilot, Windsurf, Gemini CLI, Aider, Cline, OpenCode, OpenClaw, Roo Code, Kilo Code, Crush, Factory, Continue.dev, Qwen Code, Pi, Augment Code, Trae, Codeium, Zed, Warp, Tabby, Antigravity, Kimi Code, Kiro IDE, Goose, Amazon Q, Cody, Devin, Poolside, Cosine. Features include a local security scanner, audit/check grading with JSON reports, --json output for every command, shell completions, and a badge generator.
+Moniker: skillhub
 Tags:
   - skillhub
   - AI
   - skills
+  - registry
   - claude
   - cursor
   - opencode
+  - cli
+  - audit
+  - security
+ReleaseNotesUrl: https://github.com/Sup4ikX/skillhub-cli/releases/tag/v$VERSION
+ManifestType: defaultLocale
 ManifestVersion: 1.6.0

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 /// Result of a single security check.
 #[derive(Debug, Clone)]
 pub struct ScanFinding {
@@ -23,111 +21,101 @@ pub struct ScanResult {
     pub passed: bool,
 }
 
+const INJECTION_PATTERNS: &[(&str, &str, Severity)] = &[
+    (
+        "ignore previous instructions",
+        "prompt-injection",
+        Severity::High,
+    ),
+    (
+        "ignore all previous instructions",
+        "prompt-injection",
+        Severity::High,
+    ),
+    ("disregard previous", "prompt-injection", Severity::High),
+    ("you are now", "prompt-injection", Severity::Medium),
+    ("from now on you are", "prompt-injection", Severity::Medium),
+    ("system prompt", "prompt-injection", Severity::High),
+    ("you must ignore", "prompt-injection", Severity::High),
+    (
+        "override your instructions",
+        "prompt-injection",
+        Severity::High,
+    ),
+];
+
+const EXFIL_PATTERNS: &[(&str, &str, Severity)] = &[
+    ("curl | base64", "data-exfiltration", Severity::High),
+    ("curl | sh", "data-exfiltration", Severity::High),
+    ("curl | bash", "data-exfiltration", Severity::High),
+    ("wget -O- | bash", "data-exfiltration", Severity::High),
+    ("ssh -i", "data-exfiltration", Severity::Medium),
+    ("nc -e", "data-exfiltration", Severity::High),
+    ("/dev/tcp/", "data-exfiltration", Severity::Medium),
+    ("ncat --exec", "data-exfiltration", Severity::High),
+    ("eval $(", "data-exfiltration", Severity::Medium),
+    ("eval $(curl", "data-exfiltration", Severity::High),
+    ("| bash", "data-exfiltration", Severity::Medium),
+    ("| sh", "data-exfiltration", Severity::Medium),
+];
+
+const HIDDEN_CHARS: &[(char, &str, Severity)] = &[
+    ('\u{200B}', "zero-width-space", Severity::Medium),
+    ('\u{200C}', "zero-width-non-joiner", Severity::Medium),
+    ('\u{200D}', "zero-width-joiner", Severity::Medium),
+    ('\u{FEFF}', "bom", Severity::Low),
+    ('\u{202E}', "right-to-left-override", Severity::High),
+    ('\u{202D}', "left-to-right-override", Severity::Low),
+    ('\u{2060}', "word-joiner", Severity::Low),
+];
+
 /// Run the security scanner on skill content.
 /// Returns a list of findings; empty list = clean.
 pub fn scan(content: &str) -> ScanResult {
     let mut findings = Vec::new();
 
-    // Check 1: prompt injection patterns
-    let injection_patterns: HashMap<&str, (&str, Severity)> = [
-        (
-            "ignore previous instructions",
-            ("prompt-injection", Severity::High),
-        ),
-        (
-            "ignore all previous instructions",
-            ("prompt-injection", Severity::High),
-        ),
-        ("disregard previous", ("prompt-injection", Severity::High)),
-        ("you are now", ("prompt-injection", Severity::Medium)),
-        (
-            "from now on you are",
-            ("prompt-injection", Severity::Medium),
-        ),
-        ("system prompt", ("prompt-injection", Severity::High)),
-        ("you must ignore", ("prompt-injection", Severity::High)),
-        (
-            "override your instructions",
-            ("prompt-injection", Severity::High),
-        ),
-    ]
-    .iter()
-    .cloned()
-    .collect();
-
-    // Check 2: data exfiltration patterns
-    let exfil_patterns: HashMap<&str, (&str, Severity)> = [
-        ("curl | base64", ("data-exfiltration", Severity::High)),
-        ("curl | sh", ("data-exfiltration", Severity::High)),
-        ("curl | bash", ("data-exfiltration", Severity::High)),
-        ("wget -O- | bash", ("data-exfiltration", Severity::High)),
-        ("ssh -i", ("data-exfiltration", Severity::Medium)),
-        ("nc -e", ("data-exfiltration", Severity::High)),
-        ("/dev/tcp/", ("data-exfiltration", Severity::Medium)),
-        ("ncat --exec", ("data-exfiltration", Severity::High)),
-        ("eval $(", ("data-exfiltration", Severity::Medium)),
-        ("eval $(curl", ("data-exfiltration", Severity::High)),
-        ("| bash", ("data-exfiltration", Severity::Medium)),
-        ("| sh", ("data-exfiltration", Severity::Medium)),
-    ]
-    .iter()
-    .cloned()
-    .collect();
-
-    // Check 3: hidden unicode characters
-    let hidden_chars: Vec<(char, &str, Severity)> = vec![
-        ('\u{200B}', "zero-width-space", Severity::Medium),
-        ('\u{200C}', "zero-width-non-joiner", Severity::Medium),
-        ('\u{200D}', "zero-width-joiner", Severity::Medium),
-        ('\u{FEFF}', "bom", Severity::Low),
-        ('\u{202E}', "right-to-left-override", Severity::High),
-        ('\u{202D}', "left-to-right-override", Severity::Low),
-        ('\u{2060}', "word-joiner", Severity::Low),
-    ];
-
     for (line_num, line) in content.lines().enumerate() {
         let line_lower = line.to_lowercase();
-        let line_for_char = line; // original for char checks
+        let snippet: String = line.trim().chars().take(80).collect();
 
-        // Check injection patterns
-        for (pattern, (kind, severity)) in &injection_patterns {
+        for (pattern, kind, severity) in INJECTION_PATTERNS {
             if line_lower.contains(pattern) {
                 findings.push(ScanFinding {
                     severity: severity.clone(),
                     kind,
                     line: line_num + 1,
-                    snippet: line.trim().chars().take(80).collect(),
+                    snippet: snippet.clone(),
                 });
             }
         }
 
-        // Check exfil patterns
-        for (pattern, (kind, severity)) in &exfil_patterns {
+        for (pattern, kind, severity) in EXFIL_PATTERNS {
             if line_lower.contains(pattern) {
                 findings.push(ScanFinding {
                     severity: severity.clone(),
                     kind,
                     line: line_num + 1,
-                    snippet: line.trim().chars().take(80).collect(),
+                    snippet: snippet.clone(),
                 });
             }
         }
 
-        // Check hidden unicode
-        for (ch, kind, severity) in &hidden_chars {
-            if line_for_char.contains(*ch) {
+        for (ch, kind, severity) in HIDDEN_CHARS {
+            if line.contains(*ch) {
                 findings.push(ScanFinding {
                     severity: severity.clone(),
                     kind,
                     line: line_num + 1,
-                    snippet: line.trim().chars().take(80).collect(),
+                    snippet: snippet.clone(),
                 });
             }
         }
     }
 
-    let passed = findings.is_empty();
-    ScanResult { findings, passed }
+    ScanResult {
+        passed: findings.is_empty(),
+        findings,
+    }
 }
 
 #[cfg(test)]

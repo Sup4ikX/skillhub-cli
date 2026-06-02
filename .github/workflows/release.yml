@@ -206,27 +206,26 @@ jobs:
           find dist -type f -exec cp {} release/ \;
           ls -la release/
 
-      - name: Generate winget manifest
+      - name: Stage winget manifest
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          cat > release/skillhub.winget.yaml << EOF
-          Id: SkillHub.SkillHub
-          Publisher: SkillHub
-          Name: SkillHub
-          Version: $VERSION
-          License: MIT
-          InstallerType: portable
-          Commands: skillhub
-          Installers:
-            - Arch: x64
-              Url: https://github.com/Sup4ikX/skillhub-cli/releases/download/v$VERSION/skillhub-x86_64-pc-windows-msvc.tar.gz
-              Sha256: placeholder
-            - Arch: arm64
-              Url: https://github.com/Sup4ikX/skillhub-cli/releases/download/v$VERSION/skillhub-aarch64-pc-windows-msvc.tar.gz
-              Sha256: placeholder
-          EOF
-          echo "Winget manifest created"
+          mkdir -p release/winget
+          cp winget/skillhub.yaml release/winget/SkillHub.SkillHub.yaml
+          cp winget/skillhub.installer.yaml release/winget/SkillHub.SkillHub.installer.yaml
+          cp winget/skillhub.locale.en-US.yaml release/winget/SkillHub.SkillHub.locale.en-US.yaml
+          for f in release/winget/SkillHub.SkillHub*.yaml; do
+            sed -i "s/\$VERSION/${VERSION}/g" "$f"
+          done
+          if [ -f dist/skillhub-x86_64-pc-windows-msvc.tar.gz.sha256 ]; then
+            SHA_X64=$(awk '{print $1}' dist/skillhub-x86_64-pc-windows-msvc.tar.gz.sha256)
+            sed -i "s/\$SHA256_X64/${SHA_X64}/g" release/winget/SkillHub.SkillHub.installer.yaml
+          fi
+          if [ -f dist/skillhub-aarch64-pc-windows-msvc.tar.gz.sha256 ]; then
+            SHA_ARM64=$(awk '{print $1}' dist/skillhub-aarch64-pc-windows-msvc.tar.gz.sha256)
+            sed -i "s/\$SHA256_ARM64/${SHA_ARM64}/g" release/winget/SkillHub.SkillHub.installer.yaml
+          fi
+          echo "Winget manifest ready"
 
       - name: Create release
         uses: softprops/action-gh-release@v2

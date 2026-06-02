@@ -313,18 +313,6 @@ impl AgentConfig {
     pub fn any_found(&self) -> bool {
         !self.agents.is_empty()
     }
-
-    #[allow(dead_code)]
-    pub fn summary(&self) -> String {
-        if self.agents.is_empty() {
-            return "none detected".to_string();
-        }
-        self.agents
-            .iter()
-            .map(|a| a.label().to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
 }
 
 #[cfg(test)]

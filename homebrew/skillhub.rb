@@ -1,8 +1,11 @@
 class Skillhub < Formula
-  desc "Universal skill registry for AI agents"
-    homepage "https://github.com/Sup4ikX/skillhub-cli"
+  desc "Universal skill registry for AI coding agents"
+  homepage "https://github.com/Sup4ikX/skillhub-cli"
   version "0.1.0"
   license "MIT"
+  head "https://github.com/Sup4ikX/skillhub-cli.git", branch: "main"
+
+  depends_on "rust" => :build
 
   on_macos do
     if Hardware::CPU.arm?
@@ -29,6 +32,7 @@ class Skillhub < Formula
   end
 
   test do
-    system "#{bin}/skillhub", "--help"
+    assert_match "skillhub", shell_output("#{bin}/skillhub --version")
+    assert_match "0.1.0", shell_output("#{bin}/skillhub --version")
   end
 end

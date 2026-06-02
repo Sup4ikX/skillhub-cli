@@ -97,9 +97,6 @@ impl SkillRef {
 struct GitHubRepoItem {
     full_name: String,
     description: Option<String>,
-    #[allow(dead_code)]
-    #[serde(default)]
-    stargazers_count: usize,
     #[serde(default)]
     topics: Vec<String>,
     default_branch: String,
@@ -108,8 +105,6 @@ struct GitHubRepoItem {
 #[derive(Debug, Deserialize)]
 struct GitHubSearchRepos {
     items: Vec<GitHubRepoItem>,
-    #[allow(dead_code)]
-    total_count: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -194,11 +189,7 @@ impl RegistryClient {
             }
 
             let description = item.description.unwrap_or_default();
-            let tags: Vec<String> = item
-                .topics
-                .iter()
-                .map(|t| t.to_string())
-                .collect();
+            let tags: Vec<String> = item.topics.iter().map(|t| t.to_string()).collect();
 
             out.push(Skill {
                 name: format!("@{}", item.full_name),
@@ -256,13 +247,6 @@ impl RegistryClient {
         let contents = serde_json::to_string_pretty(registry)?;
         fs::write(&cache_path, contents)?;
         Ok(())
-    }
-
-    #[allow(dead_code)]
-    pub fn update(&self) -> Result<Registry> {
-        let registry = self.fetch()?;
-        self.save_cache(&registry)?;
-        Ok(registry)
     }
 
     pub fn search(&self, query: &str) -> Result<Vec<Skill>> {

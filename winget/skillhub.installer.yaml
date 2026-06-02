@@ -1,10 +1,46 @@
-Id: SkillHub.SkillHub
+PackageIdentifier: SkillHub.SkillHub
+PackageVersion: $VERSION
+PackageLocale: en-US
 Publisher: SkillHub
-Name: SkillHub
-Version: $VERSION
+PackageName: SkillHub
 License: MIT
+ShortDescription: Universal skill registry for AI coding agents
+Description: |-
+  SkillHub is a universal skill registry for AI coding agents.
+
+  Install, search, audit and manage reusable skills across 30+ agents (Claude
+  Code, Codex, Cursor, Copilot, Windsurf, Gemini CLI, Aider, Cline, OpenCode,
+  OpenClaw, Roo Code, Kilo Code, Crush, Factory, Continue.dev, Qwen Code, Pi,
+  Augment Code, Trae, Codeium, Zed, Warp, Tabby, Antigravity, Kimi Code, Kiro
+  IDE, Goose, Amazon Q, Cody, Devin, Poolside, Cosine).
+
+  Features: local security scan (prompt injection, data exfiltration, hidden
+  Unicode), audit/check grading (security, quality, per-agent compatibility)
+  with JSON reports, JSON output on every command, shell completions for bash,
+  zsh, fish and PowerShell, badge generator, share/restore/sync manifests.
+Homepage: https://github.com/Sup4ikX/skillhub-cli
+ManifestType: installer
 InstallerType: portable
-Commands: skillhub
+Commands:
+  - skillhub
+InstallModes:
+  - interactive
+  - silent
+  - silentWithProgress
+UpgradeBehavior: install
+ReleaseNotes: |-
+  Initial 0.1.0 release.
+  - Single-binary Rust CLI, no runtime dependencies
+  - 30+ supported AI agents with auto-detection
+  - Local security scanner (prompt injection / data exfil / hidden Unicode)
+  - check / audit subcommands with security, quality, and per-agent
+    compatibility scoring
+  - --json output for every command
+  - Shell completions: bash, zsh, fish, powershell
+  - share / restore / sync / import / migrate / suggest / stats / badge
+  - Distro packages: .deb, .rpm, .apk
+  - Docker image, VS Code extension, Homebrew, Scoop and winget distribution
+ManifestVersion: 1.6.0
 Installers:
   - Arch: x64
     Url: https://github.com/Sup4ikX/skillhub-cli/releases/download/v$VERSION/skillhub-x86_64-pc-windows-msvc.tar.gz
@@ -12,4 +48,3 @@ Installers:
   - Arch: arm64
     Url: https://github.com/Sup4ikX/skillhub-cli/releases/download/v$VERSION/skillhub-aarch64-pc-windows-msvc.tar.gz
     Sha256: $SHA256_ARM64
-ManifestVersion: 1.6.0

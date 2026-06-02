@@ -149,6 +149,18 @@ pub enum Commands {
         rollback: bool,
     },
 
+    /// Run security + quality + compatibility checks on a skill
+    Check {
+        /// Installed skill name (@owner/name) or path to SKILL.md
+        target: String,
+    },
+
+    /// Detailed audit report (saved to disk as JSON)
+    Audit {
+        /// Installed skill name (@owner/name) or path to SKILL.md
+        target: String,
+    },
+
     /// Show this message (default)
     Help,
 }
