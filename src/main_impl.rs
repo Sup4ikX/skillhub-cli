@@ -1207,7 +1207,7 @@ fn cmd_upgrade(
 
         let _ = installer.uninstall(&ref_)?;
         let content = installer.download_skill(&reg_skill.download_url)?;
-        installer.install(reg_skill, &content)?;
+        installer.install(&reg_skill, &content)?;
         upgraded += 1;
 
         if !json {
