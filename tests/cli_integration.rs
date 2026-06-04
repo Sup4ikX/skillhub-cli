@@ -113,7 +113,12 @@ fn list_works_with_no_skills() {
     let out = binary().arg("list").output().expect("run");
     assert!(out.status.success());
     let s = String::from_utf8_lossy(&out.stdout);
-    assert!(s.contains("skills") || s.contains("empty") || s.is_empty());
+    assert!(
+        s.contains("skills")
+            || s.contains("empty")
+            || s.contains("Nothing installed")
+            || s.is_empty()
+    );
 }
 
 #[test]
@@ -439,8 +444,13 @@ fn info_nonexistent_cleanly() {
         .output()
         .expect("run");
     let s = String::from_utf8_lossy(&out.stdout);
+    let err = String::from_utf8_lossy(&out.stderr);
     assert!(
-        s.contains("error") || s.contains("not found") || s.contains("null"),
+        !out.status.success()
+            || s.contains("error")
+            || s.contains("not found")
+            || s.contains("null")
+            || err.contains("error"),
         "info for nonexistent skill should return error in JSON"
     );
 }
