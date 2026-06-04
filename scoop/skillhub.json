@@ -1,0 +1,37 @@
+{
+    "version": "0.1.1",
+    "description": "Universal skill registry for AI coding agents",
+    "homepage": "https://github.com/Sup4ikX/skillhub-cli",
+    "license": "MIT",
+    "suggest": {
+        "SkillHub": "Universal skill registry — 30+ AI agents, security scan, audit/check grading, JSON output, shell completions"
+    },
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/Sup4ikX/skillhub-cli/releases/download/v0.1.1/skillhub-x86_64-pc-windows-msvc.tar.gz",
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "arm64": {
+            "url": "https://github.com/Sup4ikX/skillhub-cli/releases/download/v0.1.1/skillhub-aarch64-pc-windows-msvc.tar.gz",
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+    },
+    "bin": "skillhub.exe",
+    "shortcuts": [
+        ["skillhub", "check", "--help"],
+        ["skillhub", "audit", "--help"]
+    ],
+    "checkver": {
+        "github": "https://github.com/Sup4ikX/skillhub-cli"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/Sup4ikX/skillhub-cli/releases/download/v$version/skillhub-x86_64-pc-windows-msvc.tar.gz"
+            },
+            "arm64": {
+                "url": "https://github.com/Sup4ikX/skillhub-cli/releases/download/v$version/skillhub-aarch64-pc-windows-msvc.tar.gz"
+            }
+        }
+    }
+}

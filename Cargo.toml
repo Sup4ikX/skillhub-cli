@@ -1,0 +1,60 @@
+[package]
+name = "skillhub"
+version = "0.1.1"
+edition = "2024"
+rust-version = "1.85"
+description = "Universal skill registry for AI agents"
+license = "MIT"
+repository = "https://github.com/Sup4ikX/skillhub-cli"
+
+[lib]
+name = "skillhub"
+path = "src/lib.rs"
+
+[[bin]]
+name = "skillhub"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+clap_complete = "4.5"
+ureq = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+dirs = "6"
+anyhow = "1"
+thiserror = "2"
+colored = "3"
+dialoguer = "0.11"
+indicatif = "0.17"
+url = "2"
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"
+
+[package.metadata.deb]
+maintainer = "SkillHub Team <team@skillhub.dev>"
+copyright = "2026 SkillHub"
+license-file = ["LICENSE"]
+extended-description = "Universal skill registry for AI coding agents"
+section = "utils"
+priority = "optional"
+depends = "$auto"
+
+[package.metadata.generate-rpm]
+package-name = "skillhub"
+author = "SkillHub Team <team@skillhub.dev>"
+description = "Universal skill registry for AI coding agents"
+license = "MIT"
+assets = [
+    { source = "target/release/skillhub", dest = "/usr/bin/skillhub", mode = "755" },
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

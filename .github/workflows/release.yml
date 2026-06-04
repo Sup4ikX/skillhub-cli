@@ -1,0 +1,234 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build
+
+      - name: Test
+        run: cargo test
+
+  build:
+    needs: [test]
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ""
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            suffix: ""
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ""
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            suffix: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: ".exe"
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            suffix: ".exe"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools (aarch64 Linux)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+          AR_aarch64_unknown_linux_gnu: aarch64-linux-gnu-ar
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+
+      - name: Package
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          mkdir -p ../../../dist
+          tar czf ../../../dist/skillhub-${{ matrix.target }}.tar.gz skillhub${{ matrix.suffix }}
+          cd ../../../dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            certutil -hashfile skillhub-${{ matrix.target }}.tar.gz SHA256 > skillhub-${{ matrix.target }}.tar.gz.sha256
+          else
+            shasum -a 256 skillhub-${{ matrix.target }}.tar.gz > skillhub-${{ matrix.target }}.tar.gz.sha256
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-${{ matrix.target }}
+          path: dist/*
+
+  deb:
+    name: .deb package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build .deb
+        run: cargo deb --target x86_64-unknown-linux-gnu
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-deb
+          path: target/x86_64-unknown-linux-gnu/debian/*.deb
+
+      - name: Build .deb (aarch64)
+        run: |
+          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+          rustup target add aarch64-unknown-linux-gnu
+          CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
+          AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar \
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
+          cargo deb --target aarch64-unknown-linux-gnu
+
+      - name: Upload .deb (aarch64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-deb-arm64
+          path: target/aarch64-unknown-linux-gnu/debian/*.deb
+
+  rpm:
+    name: .rpm package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-generate-rpm
+        run: cargo install cargo-generate-rpm
+
+      - name: Build binary
+        run: cargo build --release
+
+      - name: Build .rpm
+        run: cargo generate-rpm
+
+      - name: Upload .rpm
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-rpm
+          path: target/generate-rpm/*.rpm
+
+  apk:
+    name: .apk package
+    runs-on: ubuntu-latest
+    container: alpine:edge
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps and Rust
+        shell: sh
+        run: |
+          apk add git curl build-base rust cargo
+
+      - name: Build for x86_64-alpine-linux-musl
+        shell: sh
+        run: |
+          cargo build --release
+
+      - name: Package APK
+        shell: sh
+        run: |
+          mkdir -p pkg/usr/bin
+          cp target/release/skillhub pkg/usr/bin/
+          mkdir -p pkg/usr/share/doc/skillhub
+          cp README.md pkg/usr/share/doc/skillhub/
+          cd pkg
+          tar czf ../skillhub-x86_64-alpine-linux-musl.apk *
+
+      - name: Upload .apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillhub-apk
+          path: skillhub-*.apk
+
+  release:
+    needs: [build, deb, rpm, apk]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Flatten artifact tree
+        run: |
+          mkdir release
+          find dist -type f -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Stage winget manifest
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release/winget
+          cp winget/skillhub.yaml release/winget/SkillHub.SkillHub.yaml
+          cp winget/skillhub.installer.yaml release/winget/SkillHub.SkillHub.installer.yaml
+          cp winget/skillhub.locale.en-US.yaml release/winget/SkillHub.SkillHub.locale.en-US.yaml
+          for f in release/winget/SkillHub.SkillHub*.yaml; do
+            sed -i "s/\$VERSION/${VERSION}/g" "$f"
+          done
+          if [ -f dist/skillhub-x86_64-pc-windows-msvc.tar.gz.sha256 ]; then
+            SHA_X64=$(awk '{print $1}' dist/skillhub-x86_64-pc-windows-msvc.tar.gz.sha256)
+            sed -i "s/\$SHA256_X64/${SHA_X64}/g" release/winget/SkillHub.SkillHub.installer.yaml
+          fi
+          if [ -f dist/skillhub-aarch64-pc-windows-msvc.tar.gz.sha256 ]; then
+            SHA_ARM64=$(awk '{print $1}' dist/skillhub-aarch64-pc-windows-msvc.tar.gz.sha256)
+            sed -i "s/\$SHA256_ARM64/${SHA_ARM64}/g" release/winget/SkillHub.SkillHub.installer.yaml
+          fi
+          echo "Winget manifest ready"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*
+            release/winget/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
