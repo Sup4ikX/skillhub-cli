@@ -280,7 +280,10 @@ impl RegistryClient {
     }
 
     fn skill_file_exists(&self, url: &str) -> bool {
-        let mut req = ureq::get(url).set("User-Agent", concat!("skillhub/", env!("CARGO_PKG_VERSION")));
+        let mut req = ureq::get(url).set(
+            "User-Agent",
+            concat!("skillhub/", env!("CARGO_PKG_VERSION")),
+        );
         if let Some(token) = self.config.github_token() {
             req = req.set("Authorization", &format!("Bearer {}", token));
         } else if let Ok(token) = std::env::var("GITHUB_TOKEN") {
@@ -293,7 +296,10 @@ impl RegistryClient {
     }
 
     pub fn gh_get(&self, url: &str) -> Result<String> {
-        let mut req = ureq::get(url).set("User-Agent", concat!("skillhub/", env!("CARGO_PKG_VERSION")));
+        let mut req = ureq::get(url).set(
+            "User-Agent",
+            concat!("skillhub/", env!("CARGO_PKG_VERSION")),
+        );
 
         if let Some(token) = self.config.github_token() {
             req = req.set("Authorization", &format!("Bearer {}", token));

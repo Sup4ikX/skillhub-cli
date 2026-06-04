@@ -122,7 +122,10 @@ fn search_no_registry_returns_clean_error() {
     let s = String::from_utf8_lossy(&out.stdout);
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(
-        !out.status.success() || s.contains("registry") || err.contains("registry") || s.contains("[]"),
+        !out.status.success()
+            || s.contains("registry")
+            || err.contains("registry")
+            || s.contains("[]"),
         "expected clean error or empty results"
     );
 }
@@ -300,7 +303,10 @@ fn publish_force_skips_validation() {
     let s = String::from_utf8_lossy(&out.stdout);
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(
-        !out.status.success() || s.contains("error") || err.contains("error") || s.contains("missing"),
+        !out.status.success()
+            || s.contains("error")
+            || err.contains("error")
+            || s.contains("missing"),
         "publishing skill without title should fail or warn"
     );
 }

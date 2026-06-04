@@ -68,7 +68,10 @@ pub fn download_with_progress(
         )));
     }
 
-    let mut req = ureq::get(parsed.as_str()).set("User-Agent", concat!("skillhub/", env!("CARGO_PKG_VERSION")));
+    let mut req = ureq::get(parsed.as_str()).set(
+        "User-Agent",
+        concat!("skillhub/", env!("CARGO_PKG_VERSION")),
+    );
     if let Some(t) = config.github_token() {
         req = req.set("Authorization", &format!("Bearer {}", t));
     } else if let Ok(t) = std::env::var("GITHUB_TOKEN") {

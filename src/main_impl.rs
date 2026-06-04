@@ -1348,7 +1348,10 @@ fn cmd_publish(
 
     let body_str = serde_json::to_string(&payload)?;
     let mut req = ureq::post(&api_url)
-        .set("User-Agent", concat!("skillhub/", env!("CARGO_PKG_VERSION")))
+        .set(
+            "User-Agent",
+            concat!("skillhub/", env!("CARGO_PKG_VERSION")),
+        )
         .set("Content-Type", "application/json");
 
     if let Some(t) = client.github_token() {
@@ -1481,14 +1484,11 @@ fn cmd_suggest(client: &RegistryClient, json: bool) -> anyhow::Result<()> {
     }
 
     // Simple pick: highest quality score, or first if no quality scores
-    let pick = match registry
-        .skills
-        .iter()
-        .max_by(|a, b| {
-            let qa = a.quality.as_ref().map(|q| q.score).unwrap_or(0);
-            let qb = b.quality.as_ref().map(|q| q.score).unwrap_or(0);
-            qa.cmp(&qb)
-        }) {
+    let pick = match registry.skills.iter().max_by(|a, b| {
+        let qa = a.quality.as_ref().map(|q| q.score).unwrap_or(0);
+        let qb = b.quality.as_ref().map(|q| q.score).unwrap_or(0);
+        qa.cmp(&qb)
+    }) {
         Some(s) => s.clone(),
         None => return Ok(()),
     };
