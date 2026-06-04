@@ -7,7 +7,7 @@
       "author": "anthropic",
       "version": "1.2.0",
       "tags": ["research", "analysis", "citations", "academic"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@anthropic/research-assistant/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@anthropic/research-assistant/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "opencode"]
@@ -24,7 +24,7 @@
       "author": "anthropic",
       "version": "2.0.1",
       "tags": ["code-review", "security", "quality"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@anthropic/code-review/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@anthropic/code-review/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "codex", "opencode"]
@@ -41,7 +41,7 @@
       "author": "anthropic",
       "version": "1.0.3",
       "tags": ["documentation", "readme", "api-docs"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@anthropic/doc-writer/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@anthropic/doc-writer/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "codex", "gemini-cli", "opencode"]
@@ -58,7 +58,7 @@
       "author": "mattpocock",
       "version": "1.5.0",
       "tags": ["testing", "unit-tests", "integration", "edge-cases"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@mattpocock/testing/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@mattpocock/testing/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "codex", "opencode"]
@@ -75,7 +75,7 @@
       "author": "mattpocock",
       "version": "1.1.0",
       "tags": ["refactoring", "code-quality", "clean-code"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@mattpocock/refactor/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@mattpocock/refactor/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "codex", "opencode"]
@@ -92,7 +92,7 @@
       "author": "karpathy",
       "version": "0.9.0",
       "tags": ["debugging", "troubleshooting", "llm"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@karpathy/debug/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@karpathy/debug/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "opencode"]
@@ -109,7 +109,7 @@
       "author": "composio",
       "version": "3.2.1",
       "tags": ["automation", "saas", "integrations", "workflows"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@composio/saas-automation/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@composio/saas-automation/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "codex", "opencode"]
@@ -126,7 +126,7 @@
       "author": "skilltest",
       "version": "1.0.0",
       "tags": ["security", "audit", "prompt-injection", "safety"],
-      "download_url": "https://raw.githubusercontent.com/skillhub/registry/main/skills/@skilltest/security-audit/SKILL.md",
+      "download_url": "https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/registry/skills/@skilltest/security-audit/SKILL.md",
       "checksum": null,
       "compatibility": {
         "agents": ["claude-code", "codex", "gemini-cli", "opencode"]

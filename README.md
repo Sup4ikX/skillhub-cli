@@ -23,12 +23,6 @@ curl -fsSL https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/install.s
 brew install skillhub/tap/skillhub
 ```
 
-### Scoop (Windows)
-```powershell
-scoop bucket add skillhub https://github.com/skillhub/scoop-bucket
-scoop install skillhub
-```
-
 ### winget (Windows)
 ```powershell
 winget install SkillHub.SkillHub
@@ -47,11 +41,6 @@ sudo dpkg -i skillhub_0.1.1_amd64.deb
 sudo rpm -i skillhub-0.1.1-1.x86_64.rpm
 # Alpine
 sudo apk add --allow-untrusted skillhub-0.1.1.apk
-```
-
-### Docker
-```bash
-docker run --rm ghcr.io/skillhub/cli --help
 ```
 
 ---
@@ -276,12 +265,6 @@ curl -fsSL https://raw.githubusercontent.com/Sup4ikX/skillhub-cli/main/install.s
 brew install skillhub/tap/skillhub
 ```
 
-### Scoop (Windows)
-```powershell
-scoop bucket add skillhub https://github.com/skillhub/scoop-bucket
-scoop install skillhub
-```
-
 ### winget (Windows)
 ```powershell
 winget install SkillHub.SkillHub
@@ -300,11 +283,6 @@ sudo dpkg -i skillhub_0.1.1_amd64.deb
 sudo rpm -i skillhub-0.1.1-1.x86_64.rpm
 # Alpine
 sudo apk add --allow-untrusted skillhub-0.1.1.apk
-```
-
-### Docker
-```bash
-docker run --rm ghcr.io/skillhub/cli --help
 ```
 
 ---

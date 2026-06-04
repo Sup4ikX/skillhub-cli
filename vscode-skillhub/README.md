@@ -14,7 +14,7 @@ Universal skill registry for AI coding agents — install, search, and manage sk
 
 ## Requirements
 
-- [SkillHub CLI](https://github.com/skillhub/cli) installed and configured (`skillhub` in PATH)
+- [SkillHub CLI](https://github.com/Sup4ikX/skillhub-cli) installed and configured (`skillhub` in PATH)
 - VS Code 1.85+
 
 ## Usage
