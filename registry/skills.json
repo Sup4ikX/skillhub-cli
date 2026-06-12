@@ -136,6 +136,37 @@
         "security": 98,
         "clarity": 90
       }
+    },
+    {
+      "name": "@xquik/tweetclaw",
+      "description": "OpenClaw safety guide for X/Twitter automation: scrape tweets, search tweets and replies, post tweets, follower export, media workflows, monitors, webhooks, and giveaway draws",
+      "author": "xquik",
+      "version": "1.6.32",
+      "tags": [
+        "twitter",
+        "x",
+        "tweet-scraper",
+        "search-tweets",
+        "search-replies",
+        "post-tweets",
+        "follower-export",
+        "media",
+        "webhooks",
+        "giveaway",
+        "openclaw",
+        "mcp",
+        "agent-tools"
+      ],
+      "download_url": "https://raw.githubusercontent.com/Xquik-dev/tweetclaw/master/skills/tweetclaw/SKILL.md",
+      "checksum": null,
+      "compatibility": {
+        "agents": ["openclaw", "claude-code", "codex"]
+      },
+      "quality": {
+        "score": 96,
+        "security": 100,
+        "clarity": 90
+      }
     }
   ]
 }
